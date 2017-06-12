@@ -1,0 +1,1 @@
+cmd /K "gradlew.bat idea & gradlew.bat gIR"

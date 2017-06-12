@@ -1,0 +1,1 @@
+cmd /K "gradlew.bat clean setupDecompWorkspace --refresh-dependencies & gradlew.bat idea & gradlew.bat gIR"

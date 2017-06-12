@@ -1,0 +1,1 @@
+cmd /K "gradlew.bat clean & gradlew.bat build"
