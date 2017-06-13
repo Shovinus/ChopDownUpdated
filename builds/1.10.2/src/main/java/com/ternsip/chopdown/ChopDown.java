@@ -28,7 +28,7 @@ public class ChopDown {
 
     public static final String MODID = "chopdown";
     public static final String MODNAME = "ChopDown";
-    public static final String VERSION = "1.0.1";
+    public static final String VERSION = "1.0.2";
     public static final String AUTHOR = "Ternsip";
 
     @EventHandler
@@ -78,7 +78,7 @@ public class ChopDown {
         }
         for (Map.Entry<BlockPos, Integer> entry : used.entrySet()) {
             BlockPos blockPos = entry.getKey();
-            if (isDraggable(world, blockPos.add(0, -1, 0))) {
+            if (!pos.equals(blockPos) && isDraggable(world, blockPos.add(0, -1, 0))) {
                 int oy = blockPos.getY() - pos.getY();
                 drop(world, blockPos, blockPos.add(oy * dirX, 0, oy * dirZ));
             }
