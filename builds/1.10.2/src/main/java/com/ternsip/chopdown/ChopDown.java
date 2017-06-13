@@ -1,8 +1,10 @@
 package com.ternsip.chopdown;
 
+import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.item.EntityFallingBlock;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -13,8 +15,10 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Random;
+import java.util.Map;
 
 @Mod(   modid = ChopDown.MODID,
         name = ChopDown.MODNAME,
@@ -24,7 +28,7 @@ public class ChopDown {
 
     public static final String MODID = "chopdown";
     public static final String MODNAME = "ChopDown";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.0.1";
     public static final String AUTHOR = "Ternsip";
 
     @EventHandler
@@ -33,52 +37,90 @@ public class ChopDown {
     }
 
     @SubscribeEvent
-    @SuppressWarnings({"ConstantConditions"})
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
         IBlockState state = world.getBlockState(event.getPos());
-        if (state.getBlock() != Blocks.LOG && state.getBlock() != Blocks.LOG2) {
+        BlockPos pos = event.getPos();
+        if (!state.getBlock().isWood(world, pos)) {
             return;
         }
-        BlockPos pos = event.getPos();
         int radius = 16;
-        int leaf = 3;
-        Random random = new Random(System.currentTimeMillis());
-        int dirX = random.nextInt(3) - 1;
-        int dirZ = random.nextInt(3) - 1;
+        int dirX = Math.max(-1, Math.min(1, pos.getX() - (int)Math.round(event.getPlayer().posX - 0.5)));
+        int dirZ = Math.max(-1, Math.min(1, pos.getZ() - (int)Math.round(event.getPlayer().posZ - 0.5)));
         LinkedList<BlockPos> queue = new LinkedList<BlockPos>();
+        HashMap<BlockPos, Integer> used = new HashMap<BlockPos, Integer>();
         queue.add(pos);
+        int leaf = 5;
+        used.put(pos, leaf);
         while (!queue.isEmpty()) {
             BlockPos top = queue.pollFirst();
-            for (int dx = -leaf; dx <= leaf; ++dx) {
-                for (int dy = -leaf; dy <= leaf; ++dy) {
-                    for (int dz = -leaf; dz <= leaf; ++dz) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    for (int dz = -1; dz <= 1; ++dz) {
                         BlockPos nPos = top.add(dx, dy, dz);
-                        double distSq = nPos.distanceSq(pos);
-                        if (distSq > radius * radius || distSq < 1) {
+                        int step = used.get(top);
+                        if (step <= 0 || nPos.distanceSq(pos) > radius * radius) {
                             continue;
                         }
                         IBlockState nState = world.getBlockState(nPos);
-                        int oy = nPos.getY() - pos.getY();
-                        if ((dx <= 1 && dx >= -1 && dy <= 1 && dy >= 0 && dz <= 1 && dz >= -1) && (nState.getBlock() == Blocks.LOG || nState.getBlock() == Blocks.LOG2)) {
-                            drop(world, nPos, nPos.add(oy * dirX, 0, oy * dirZ));
-                            queue.push(nPos);
-                        }
-                        if (nState.getBlock() == Blocks.LEAVES || nState.getBlock() == Blocks.LEAVES2) {
-                            drop(world, nPos, nPos.add(oy * dirX, 0, oy * dirZ));
+                        boolean log = nState.getBlock().isWood(world, nPos);
+                        boolean leaves = nState.getBlock().isLeaves(nState, world, nPos);
+                        if ((dy >= 0 && step == leaf && log) || leaves) {
+                            step = step - (leaves ? 1 : 0);
+                            if (!used.containsKey(nPos) || used.get(nPos) < step) {
+                                used.put(nPos, step);
+                                queue.push(nPos);
+                            }
                         }
                     }
                 }
             }
         }
+        for (Map.Entry<BlockPos, Integer> entry : used.entrySet()) {
+            BlockPos blockPos = entry.getKey();
+            if (isDraggable(world, blockPos.add(0, -1, 0))) {
+                int oy = blockPos.getY() - pos.getY();
+                drop(world, blockPos, blockPos.add(oy * dirX, 0, oy * dirZ));
+            }
+        }
+    }
+
+    private static boolean isDraggable(World world, BlockPos pos) {
+        IBlockState state = world.getBlockState(pos);
+        return  state.getBlock().isWood(world, pos) ||
+                state.getBlock().isLeaves(state, world, pos) ||
+                state.getBlock().isAir(state, world, pos) ||
+                state.getBlock().isPassable(world, pos);
     }
 
     private static void drop(World world, BlockPos pos, BlockPos newPos) {
-        EntityFallingBlock ef = new EntityFallingBlock(world, newPos.getX(), newPos.getY(), newPos.getZ(), world.getBlockState(pos));
-        ef.setEntityBoundingBox(new AxisAlignedBB(newPos.add(0, 0, 0), newPos.add(1, 1, 1)));
-        ef.fallTime = 1;
-        world.spawnEntityInWorld(ef);
+        EntityFallingBlock fallingBlock = new EntityFallingBlock(world, newPos.getX(), newPos.getY(), newPos.getZ(), world.getBlockState(pos));
+        fallingBlock.setEntityBoundingBox(new AxisAlignedBB(newPos.add(0, 0, 0), newPos.add(1, 1, 1)));
+        fallingBlock.fallTime = 1;
+        world.spawnEntityInWorld(fallingBlock);
         world.setBlockState(pos, Blocks.AIR.getDefaultState());
     }
+
+    public static class EntityFallingBlock extends net.minecraft.entity.item.EntityFallingBlock {
+
+        EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState) {
+            super(worldIn, x, y, z, fallingBlockState);
+        }
+
+        @Nullable
+        @Override
+        public EntityItem entityDropItem(ItemStack stack, float offsetY) {
+            IBlockState state = getBlock();
+            if (state != null && state.getBlock() instanceof BlockLeaves) {
+                BlockLeaves leaves = (BlockLeaves) state.getBlock();
+                for (ItemStack item : leaves.getDrops(worldObj, getPosition(), state, 0)) {
+                    super.entityDropItem(item, offsetY);
+                }
+                return null;
+            }
+            return super.entityDropItem(stack, offsetY);
+        }
+    }
+
 
 }
