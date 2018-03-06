@@ -1,5 +1,5 @@
 #### Minecraft forge mod chopdown brings realistic tree chopping that makes logs and leaves fall down after cutting
-###Updates version handles trees in forests, really large trees, even the natura redwoods and drops trees more realistically.
+### Updates version handles trees in forests, really large trees, even the natura redwoods and drops trees more realistically.
 ![](logo.png)
 
 Features
@@ -14,9 +14,7 @@ Features
 
 Installation
 + Download jar for your version
-[1.10.2](builds/1.10.2/bin/chopdown-1.0.2-1.10.2.jar?raw=true), 
-[1.11.2](builds/1.11.2/bin/chopdown-1.0.2-1.11.2.jar?raw=true),
-[1.12](builds/1.12/bin/chopdown-1.0.2-1.12.jar?raw=true)
+[1.10.2](builds/1.10.2/bin/chopdownupdated-0.9.0-1.10.2.jar?raw=true)
 + Put the jar to your minecraft mods folder
 
 This mod is not really like the first, the first by Ternsip was a very cool idea and very simple, however while using it there were a few issues I found, for example ternsips version uses a 3d radius as apposed to horizontal, meaning that large jungle and spruce trees end up with their tops floating in mid air.
