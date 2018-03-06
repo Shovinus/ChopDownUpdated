@@ -1,8 +1,0 @@
-python unpack_all.py
-sh install_all.sh
-Open idea -> select import -> select gradle file
-close idea
-sh dofix.sh
-open idea last project
-client/server classpath: v -> v_main
-sh build_all.sh
