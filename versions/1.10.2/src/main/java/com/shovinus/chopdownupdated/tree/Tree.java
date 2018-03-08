@@ -1,15 +1,14 @@
-package com.shovinus.chopdown.tree;
+package com.shovinus.chopdownupdated.tree;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.shovinus.chopdown.ChopDown;
-import com.shovinus.chopdown.Config;
-import com.shovinus.chopdown.Config.TreeConfiguration;
+import com.shovinus.chopdownupdated.ChopDown;
+import com.shovinus.chopdownupdated.config.Config.TreeConfiguration;
+import com.shovinus.chopdownupdated.config.PersonalConfig;
 
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.properties.IProperty;
@@ -416,6 +415,17 @@ public class Tree implements Runnable {
 		if (!(isWood(pos) || isLeaves(pos))) {
 			return;
 		}
+		PersonalConfig playerConfig = ChopDown.config.getPlayerConfig(player.getUniqueID());
+		if(playerConfig.makeGlass) {
+			if(isWood(pos)) {
+				world.setBlockState(pos, Blocks.STAINED_GLASS.getStateFromMeta(1));	
+			} else {
+				world.setBlockState(pos, Blocks.STAINED_GLASS.getStateFromMeta(2));	
+			}
+			if(playerConfig.dontDrop) {
+				return;
+			}
+		}
 		IBlockState state = rotateLog(world,world.getBlockState(pos));		
 		if(!(isAir(newPos)|| isPassable(newPos))) {
 			// Do drops at location)
@@ -429,19 +439,22 @@ public class Tree implements Runnable {
 			return;
 		}
 		world.setBlockState(pos, Blocks.AIR.getDefaultState());		
-		
-		if (!UseSolid) {
-			EntityFallingBlock fallingBlock = new EntityFallingBlock(world, newPos.getX() + 0.5, newPos.getY() + 0.5,
-					newPos.getZ() + 0.5, state);
-			fallingBlock.setEntityBoundingBox(new AxisAlignedBB(newPos.add(0, 0, 0), newPos.add(1, 1, 1)));
-			fallingBlock.fallTime = 1;
-			world.spawnEntityInWorld(fallingBlock);
-		} else {
-
-			while (isAir(newPos.add(0, -1, 0)) && newPos.add(0, -1, 0).getY() > 0) {
-				newPos = newPos.add(0, -1, 0);
-			}
+		if(playerConfig.dontDrop) {			
 			world.setBlockState(newPos, state);
+		} else {
+			if (!UseSolid) {
+				EntityFallingBlock fallingBlock = new EntityFallingBlock(world, newPos.getX() + 0.5, newPos.getY() + 0.5,
+						newPos.getZ() + 0.5, state);
+				fallingBlock.setEntityBoundingBox(new AxisAlignedBB(newPos.add(0, 0, 0), newPos.add(1, 1, 1)));
+				fallingBlock.fallTime = 1;
+				world.spawnEntityInWorld(fallingBlock);
+			} else {
+	
+				while (isAir(newPos.add(0, -1, 0)) && newPos.add(0, -1, 0).getY() > 0) {
+					newPos = newPos.add(0, -1, 0);
+				}
+				world.setBlockState(newPos, state);
+			}
 		}
 	}
 

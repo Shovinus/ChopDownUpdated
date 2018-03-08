@@ -1,11 +1,13 @@
-package com.shovinus.chopdown;
+package com.shovinus.chopdownupdated.config;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.UUID;
 
 import com.google.gson.Gson;
+import com.shovinus.chopdownupdated.ChopDown;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.config.Configuration;
 
 public class Config {
@@ -13,12 +15,13 @@ public class Config {
 	public boolean lowerLogs;
 	public int maxDropsPerTickPerTree;
 	public int maxFallingBlockBeforeManualMove;
+	public HashMap<UUID,PersonalConfig> playerConfigs = new HashMap<UUID,PersonalConfig>();
 	public TreeConfiguration[] treeConfigurations = new TreeConfiguration[] {
-			new TreeConfiguration(8, 8, "minecraft:log:0", "minecraft:leaves:0", "biomesoplenty:leaves_3:9", "biomesoplenty:leaves_2:3"),
+			new TreeConfiguration(8, 8, "minecraft:log:0", "minecraft:leaves:0", "biomesoplenty:leaves_3:9", "biomesoplenty:leaves_2:3", "biomesoplenty:leaves_0:1", "biomesoplenty:leaves_1:5"),
 			new TreeConfiguration(8, 8, "minecraft:log:1", "minecraft:leaves:1"),
 			new TreeConfiguration(8, 8, "minecraft:log:2", "minecraft:leaves:2", "biomesoplenty:leaves_0:0"),
 			new TreeConfiguration(8, 8, "minecraft:log:3", "minecraft:leaves:3"),
-			new TreeConfiguration(8, 8, "minecraft:log2:0", "minecraft:leaves2:0"),
+			new TreeConfiguration(8, 8, "minecraft:log2:0", "minecraft:leaves2:0", "biomesoplenty:leaves_0:1"),
 			new TreeConfiguration(8, 8, "minecraft:log2:1", "minecraft:leaves2:1"),
 			new TreeConfiguration(8, 8, "natura:overworld_logs:0", "natura:overworld_leaves:0"),
 			new TreeConfiguration(8, 8, "natura:overworld_logs:1", "natura:overworld_leaves:1"),
@@ -28,23 +31,37 @@ public class Config {
 			new TreeConfiguration(8, 8, "natura:overworld_logs2:1", "natura:overworld_leaves2:1"),
 			new TreeConfiguration(8, 8, "natura:overworld_logs2:2", "natura:overworld_leaves2:2"),
 			new TreeConfiguration(8, 8, "natura:overworld_logs2:3", "natura:overworld_leaves2:3"),
-			new TreeConfiguration(32, 32, "natura:redwood_logs:0", "natura:redwood_logs:1", "natura:redwood_logs:2",
-					"natura:redwood_leaves:0"),
+			new TreeConfiguration(32, 32, "natura:redwood_logs:0", "natura:redwood_logs:1", "natura:redwood_logs:2","natura:redwood_leaves:0"),
 			new TreeConfiguration(8, 8, "natura:nether_logs:0", "natura:nether_leaves:0"),
-			new TreeConfiguration(8, 8, "natura:nether_logs:1", "natura:nether_leaves2:0", "natura:nether_leaves2:1",
-					"natura:nether_leaves2:2"),
+			new TreeConfiguration(8, 8, "natura:nether_logs:1", "natura:nether_leaves2:0", "natura:nether_leaves2:1","natura:nether_leaves2:2"),
 			new TreeConfiguration(8, 8, "natura:nether_logs:2", "natura:nether_leaves:2"),
 			new TreeConfiguration(8, 8, "natura:nether_logs2:0", "natura:nether_logs2:1", "natura:nether_leaves:0"),
 			new TreeConfiguration(8, 8, "biomesoplenty:log_2:5", "biomesoplenty:leaves_4:3"),
 			new TreeConfiguration(8, 8, "biomesoplenty:log_1:7", "biomesoplenty:leaves_4:9"),
 			new TreeConfiguration(8, 8, "biomesoplenty:log_4:5"),
 			new TreeConfiguration(8, 8, "biomesoplenty:log_3:6", "biomesoplenty:leaves_5:6"),
+			new TreeConfiguration(8, 8, "biomesoplenty:log_3:4", "biomesoplenty:leaves_3:6"),
+			new TreeConfiguration(8, 8, "biomesoplenty:log_0:7", "biomesoplenty:leaves_1:6"),
+			new TreeConfiguration(8, 8, "biomesoplenty:log_2:6", "biomesoplenty:leaves_5:4"),
+			new TreeConfiguration(8, 8, "harvestcraft:pammaple:0", "minecraft:leaves:1"),
+			new TreeConfiguration(8, 8, "integrateddynamics:menrilLog:0", "integrateddynamics:menrilFilledLog:0","integrateddynamics:menrilLeaves:0"),
 	};
-
+	
+	public PersonalConfig getPlayerConfig(UUID player) {
+		PersonalConfig playerConfig;        
+        if(playerConfigs.containsKey(player)) {
+        	playerConfig = ChopDown.config.playerConfigs.get(player);
+        } else {
+        	playerConfig = new PersonalConfig();
+        	playerConfigs.put(player, playerConfig);
+        }
+        return playerConfig;
+	}
+	
 	public static Configuration config;
 
-	public Config() {
-		File file = new File("/config/ChopDownUpdated.cfg");
+	public Config(File file) {
+		
 		config = new Configuration(file);
 		file.getAbsolutePath();
 		String tempTreeConfig = "";
@@ -57,8 +74,8 @@ public class Config {
 					1000000,
 					"If the total blocks in the tree is above this amount instead of creating entities then it will place the blocks directly on the floor, this is for really large trees like the natura Redwood");
 			tempTreeConfig = config.getString("treeConfigurations", "Trees", new Gson().toJson(treeConfigurations),
-					"List of possible trees, i.e. spruce log and spruce leaves, this makes feling trees more acurate for mixed trees");
-		} catch (Exception e) {
+					"List of possible trees, i.e. spruce log and spruce leaves, this makes felling trees more acurate for mixed trees");
+			} catch (Exception e) {
 			System.out.println("Error loading config, returning to default variables.");
 		} finally {
 			config.save();

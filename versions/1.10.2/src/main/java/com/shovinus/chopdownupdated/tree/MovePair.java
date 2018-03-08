@@ -1,4 +1,4 @@
-package com.shovinus.chopdown.tree;
+package com.shovinus.chopdownupdated.tree;
 
 import net.minecraft.util.math.BlockPos;
 

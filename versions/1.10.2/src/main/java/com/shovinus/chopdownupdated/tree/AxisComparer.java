@@ -1,8 +1,8 @@
-package com.shovinus.chopdown.tree;
+package com.shovinus.chopdownupdated.tree;
 
 import java.util.Comparator;
 
-import com.shovinus.chopdown.tree.DirectionSort;
+import com.shovinus.chopdownupdated.tree.DirectionSort;
 
 import net.minecraft.util.math.BlockPos;
 
