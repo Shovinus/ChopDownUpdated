@@ -2,3 +2,4 @@
 
 !/builds/*/bin
 !/builds/*/src
+*.ini

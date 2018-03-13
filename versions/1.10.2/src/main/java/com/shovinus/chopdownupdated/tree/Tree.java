@@ -142,7 +142,7 @@ public class Tree implements Runnable {
 						if (y > base.getY()) {
 							wentUp = true;
 						}
-						Integer leafStep = estimatedTree.get(blockStep);
+						Integer leafStep = getEstimate(blockStep);
 						if (leafStep == null) {
 							leafStep = 0;
 						}
@@ -158,8 +158,12 @@ public class Tree implements Runnable {
 							continue;
 						}						
 						// If not directly connected to the tree search down for a base
-						if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && onSolid
-								&& !(inspectPos.getX() == base.getX() && inspectPos.getZ() == base.getZ())) {
+						if (log && (leafStep > 0 || dy < 0) 
+								&& !estimatedTree.containsKey(inspectPos) 
+								&& onSolid
+								&& (Math.abs(inspectPos.getX() - base.getX())>1 || Math.abs(inspectPos.getZ() - base.getZ())>1)
+							
+								) {
 							// Its the trunk of another tree, check to see if we already have this tree in
 							// the list, or add it.
 							if (main) {
@@ -182,7 +186,7 @@ public class Tree implements Runnable {
 						 cases of issues building with logs in houses)
 						 
 						 */
-						if (log && ((cantDrag(world, inspectPos) && !yMatch)
+						if (main && log && ((cantDrag(world, inspectPos) && !yMatch)
 								|| (yMatch && logAbove && onSolid && !wentUp)) && leafStep == 0) {
 							estimatedTree.clear();
 							queue.clear();
@@ -260,6 +264,7 @@ public class Tree implements Runnable {
 	private Integer getEstimate(BlockPos pos) {
 		return estimatedTree.get(pos);
 	}
+	@SuppressWarnings("deprecation")
 	public static String blockName(BlockPos pos, World world) {
 		ItemStack stack = world.getBlockState(pos).getBlock().getItem(world, pos, world.getBlockState(pos));
 		ResourceLocation loc = stack.getItem().getRegistryName();
@@ -427,7 +432,7 @@ public class Tree implements Runnable {
 			}
 		}
 		IBlockState state = rotateLog(world,world.getBlockState(pos));		
-		if(!(isAir(newPos)|| isPassable(newPos))) {
+		if(!(isAir(newPos)|| isPassable(newPos)) || (isLeaves(pos) && ChopDown.config.dropLeaves)) {
 			// Do drops at location)
 			for(ItemStack stacky :  state.getBlock().getDrops(world, pos, state, 0))
 			{

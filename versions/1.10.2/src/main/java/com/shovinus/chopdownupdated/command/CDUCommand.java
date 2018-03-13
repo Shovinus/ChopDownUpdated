@@ -31,7 +31,7 @@ public class CDUCommand  extends CommandBase
     }
     
     @Override
-    public List getCommandAliases()
+    public List<String> getCommandAliases()
     {
         return Lists.newArrayList("cdu");
     }
@@ -90,16 +90,7 @@ public class CDUCommand  extends CommandBase
         }
         
         sender.addChatMessage(new TextComponentTranslation("commands.chopdownupdated." + action + ".success", args[1]));
-    }
-    private void dontDrop(ICommandSender sender, String[] args) throws CommandException
-    {
-        if (args.length < 2)
-        {
-            throw new WrongUsageException("commands.chopdownupdated.makeglass.usage");
-        }
-        boolean make = parseBoolean(args[1]);
-        sender.addChatMessage(new TextComponentTranslation("commands.chopdownupdated.makeglass.success", make));
-    }
+    }   
 
     @Override
     public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos)
