@@ -1,10 +1,12 @@
 package com.shovinus.chopdownupdated;
 
 
+import net.minecraft.client.gui.GuiOptions;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
@@ -13,18 +15,22 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.concurrent.*;
 
 import com.shovinus.chopdownupdated.command.CDUCommand;
 import com.shovinus.chopdownupdated.config.Config;
+import com.shovinus.chopdownupdated.config.GuiConfigChopDown;
 import com.shovinus.chopdownupdated.tree.Tree;
 
-@Mod(modid = ChopDown.MODID, name = ChopDown.MODNAME, version = ChopDown.VERSION, acceptableRemoteVersions = "*")
+@Mod(modid = ChopDown.MODID, name = ChopDown.MODNAME, version = ChopDown.VERSION, acceptableRemoteVersions = "*", 
+guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
 public class ChopDown {
 	ExecutorService executor;
 	
@@ -34,8 +40,7 @@ public class ChopDown {
 	public static final String AUTHOR = "Shovinus";/*Original Idea by Ternsip,however the mod does not really 
 	resemble that in any way other that the turning of blocks in to falling entities with a push out of 1 per y height.*/
 	public static LinkedList<Tree> FallingTrees = new LinkedList<Tree>();
-	public static Config config;
-	
+
 	@EventHandler
 	public void init(FMLInitializationEvent event) {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -43,7 +48,7 @@ public class ChopDown {
 	@EventHandler
 	
 		public void preinit(FMLPreInitializationEvent event) {
-		   config = new Config(new File(event.getModConfigurationDirectory()+"/chopdownupdated.cfg"));
+		   Config.load(event);
 		}
 	@EventHandler
 	public void serverLoad(FMLServerStartingEvent event)
@@ -102,7 +107,7 @@ public class ChopDown {
 		if(!(event.getEntityPlayer() instanceof EntityPlayerMP)) {
 			return;
 		}
-		if(config.getPlayerConfig(event.getEntityPlayer().getUniqueID()).showBlockName) {
+		if(Config.getPlayerConfig(event.getEntityPlayer().getUniqueID()).showBlockName) {
 			World world = event.getWorld();
 			BlockPos pos = event.getPos();
 			if(Tree.isLeaves(pos, world) || Tree.isWood(pos, world)) {

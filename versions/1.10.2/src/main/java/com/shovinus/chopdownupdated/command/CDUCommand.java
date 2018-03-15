@@ -3,7 +3,7 @@ package com.shovinus.chopdownupdated.command;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.shovinus.chopdownupdated.ChopDown;
+import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 
 import net.minecraft.command.CommandBase;
@@ -78,7 +78,7 @@ public class CDUCommand  extends CommandBase
         	return;
         }
         
-        PersonalConfig playerConfig = ChopDown.config.getPlayerConfig(((EntityPlayerMP)sender.getCommandSenderEntity()).getUniqueID());
+        PersonalConfig playerConfig = Config.getPlayerConfig(((EntityPlayerMP)sender.getCommandSenderEntity()).getUniqueID());
         if(action.equals("makeGlass")){
             playerConfig.makeGlass= value;
         }else if(action.equals("dontDrop")){

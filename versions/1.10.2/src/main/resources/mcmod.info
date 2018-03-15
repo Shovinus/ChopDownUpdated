@@ -1,14 +1,14 @@
 [
 {
-  "modid": "examplemod",
-  "name": "Example Mod",
-  "description": "Example placeholder mod.",
+  "modid": "chopdownupdated",
+  "name": "Chop Down Updated",
+  "description": "Allows cutting down an entire tree in one go...",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
+  "authorList": ["Shovinus","Ternsip"],
+  "credits": "Ternsip for the starting point",
   "logoFile": "",
   "screenshots": [],
   "dependencies": []

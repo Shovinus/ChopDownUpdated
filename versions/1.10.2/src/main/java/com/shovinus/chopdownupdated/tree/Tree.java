@@ -6,8 +6,8 @@ import java.util.LinkedList;
 
 import javax.annotation.Nullable;
 
-import com.shovinus.chopdownupdated.ChopDown;
-import com.shovinus.chopdownupdated.config.Config.TreeConfiguration;
+import com.shovinus.chopdownupdated.config.TreeConfiguration;
+import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 
 import net.minecraft.block.BlockLeaves;
@@ -41,6 +41,7 @@ public class Tree implements Runnable {
 
 	int fallX = 1;
 	int fallZ = 0;
+	int fallOffset = 0;
 	
 	EnumFallAxis axis = EnumFallAxis.X;
 	
@@ -50,6 +51,7 @@ public class Tree implements Runnable {
 	int leafLimit = 7;
 
 	boolean wentUp = false;
+	
 
 	public Boolean finishedCalculation = false;
 	public Boolean failedToBuild = false;
@@ -81,7 +83,7 @@ public class Tree implements Runnable {
 		base = pos;
 		this.world = world;
 		addEstimateBlock(base, 0);
-		for(TreeConfiguration treeConfig : ChopDown.config.treeConfigurations) {
+		for(TreeConfiguration treeConfig : Config.treeConfigurations) {
 			if(treeConfig.matches(blockName(base,world))) {
 				this.config = treeConfig;
 			}
@@ -192,6 +194,11 @@ public class Tree implements Runnable {
 							queue.clear();
 							return;
 						}
+						if(log && inspectPos.getY() == base.getY()+ 1) {
+							if(inspectPos.getX()*fallX > (fallOffset + base.getX())*fallX) {
+								fallOffset =  inspectPos.getX() - base.getX();
+							}
+						}
 						if (!yMatch || !cantDrag(world, inspectPos)) {
 							addEstimateBlock(inspectPos, leafStep);
 						} else {
@@ -209,7 +216,7 @@ public class Tree implements Runnable {
 	public void getDropBlocks() throws Exception {
 		getPossibleTree();		
 		getRealisticTree();
-		if(ChopDown.config.lowerLogs) {
+		if(Config.lowerLogs) {
 			lowerLogs();
 		}
 		this.finishedCalculation = true;
@@ -310,11 +317,11 @@ public class Tree implements Runnable {
 	 * Iterates through blocks waiting to drop
 	 */
 	public boolean dropBlocks() {
-		int blocksRemaining = ChopDown.config.maxDropsPerTickPerTree;
+		int blocksRemaining = Config.maxDropsPerTickPerTree;
 		BlockPos pos;
 		while ((pos = fallingBlocksList.pollFirst()) != null) {			
 			TreeMovePair pair = fallingBlocks.get(pos);
-			drop(world, pair.from, pair.to, fallingBlocks.size() > ChopDown.config.maxFallingBlockBeforeManualMove);	
+			drop(world, pair.from, pair.to, fallingBlocks.size() > Config.maxFallingBlockBeforeManualMove);	
 			blocksRemaining --;
 			if(blocksRemaining <= 0 && !fallingBlocksList.isEmpty()) {
 				return false;
@@ -335,7 +342,14 @@ public class Tree implements Runnable {
 				while (movedBlock) {
 					movedBlock = false;
 					TreeMovePair lowerPair = getLowerTargetBlock(pair.to);
-					if (lowerPair != null && lowerPair.leaves) {
+					if (lowerPair != null && 
+							lowerPair.leaves && 
+							pair.to.getY() > base.getY() && 
+							(
+									(isAir(lowerPair.to)|| isPassable(lowerPair.to)) || 
+									!(isAir(pair.to)|| isPassable(pair.to))
+							)									
+						) {
 						BlockPos upperBlock = pair.to;
 						pair.to = lowerPair.to;
 						lowerPair.to = upperBlock;
@@ -420,7 +434,7 @@ public class Tree implements Runnable {
 		if (!(isWood(pos) || isLeaves(pos))) {
 			return;
 		}
-		PersonalConfig playerConfig = ChopDown.config.getPlayerConfig(player.getUniqueID());
+		PersonalConfig playerConfig = Config.getPlayerConfig(player.getUniqueID());
 		if(playerConfig.makeGlass) {
 			if(isWood(pos)) {
 				world.setBlockState(pos, Blocks.STAINED_GLASS.getStateFromMeta(1));	
@@ -432,7 +446,7 @@ public class Tree implements Runnable {
 			}
 		}
 		IBlockState state = rotateLog(world,world.getBlockState(pos));		
-		if(!(isAir(newPos)|| isPassable(newPos)) || (isLeaves(pos) && ChopDown.config.dropLeaves)) {
+		if(!(isAir(newPos)|| isPassable(newPos)) || (isLeaves(pos) && Config.dropLeaves)) {
 			// Do drops at location)
 			for(ItemStack stacky :  state.getBlock().getDrops(world, pos, state, 0))
 			{
