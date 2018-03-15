@@ -197,6 +197,8 @@ public class Tree implements Runnable {
 						if(log && inspectPos.getY() == base.getY()+ 1) {
 							if(inspectPos.getX()*fallX > (fallOffset + base.getX())*fallX) {
 								fallOffset =  inspectPos.getX() - base.getX();
+							} else if(inspectPos.getZ()*fallZ > (fallOffset + base.getZ())*fallZ) {
+								fallOffset =  inspectPos.getZ() - base.getZ();
 							}
 						}
 						if (!yMatch || !cantDrag(world, inspectPos)) {
@@ -228,8 +230,8 @@ public class Tree implements Runnable {
 	private BlockPos repositionBlock(BlockPos pos) {
 		int y = pos.getY() - base.getY();
 
-		int x = pos.getX() - base.getX();
-		int z = pos.getZ() - base.getZ();
+		int x = pos.getX() - (base.getX()+fallOffset);
+		int z = pos.getZ() - (base.getZ()+fallOffset);
 
 		int changeX = fallZ * z;
 		int changeZ = fallX * x;
