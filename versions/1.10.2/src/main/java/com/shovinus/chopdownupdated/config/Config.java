@@ -20,7 +20,7 @@ public class Config {
 	public static String CATEGORY = "General";
 
 	public static boolean lowerLogs;
-	public static boolean dropLeaves;
+	public static boolean breakLeaves;
 	public static int maxDropsPerTickPerTree;
 	public static int maxFallingBlockBeforeManualMove;
 	public static HashMap<UUID, PersonalConfig> playerConfigs = new HashMap<UUID, PersonalConfig>();
@@ -81,7 +81,7 @@ public class Config {
 		reloadConfig();
 	}
 
-	private static void reloadConfig() {
+	public static void reloadConfig() {
 
 		lowerLogs = config.getBoolean("lowerLogs", CATEGORY, true,
 				"Whether to move logs down through leaves prior to dropping, makes for a better looking fallen tree but adds a few extra iterations, try setting to false if server not handling well.");
@@ -97,7 +97,7 @@ public class Config {
 		String[] tempTreeConfig = config.getStringList("treeConfigurations", CATEGORY,
 				defaultTreeConfig.toArray(new String[defaultTreeConfig.size()]),
 				"List of possible trees, i.e. spruce log and spruce leaves, this makes felling trees more acurate for mixed trees, it also allows large trees like natura redwoods to be chopped more acurately, normally this tree would get ignored because its leaves reach further than a normal tree and its radius is much wider");
-		dropLeaves = config.getBoolean("dropLeaves", CATEGORY, false,
+		breakLeaves = config.getBoolean("breakLeaves", CATEGORY, false,
 				"When you chop a tree down the leaves all fall off and do their drops instead of falling with the tree, this can be better as a) less load and b)The falling of trees gets less messy, you still need to chop the logs but the leaves don't get in the way");
 		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();
 		for (String treeConfig : tempTreeConfig) {
