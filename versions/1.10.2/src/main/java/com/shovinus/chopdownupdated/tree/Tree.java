@@ -77,6 +77,15 @@ public class Tree implements Runnable {
 		getFallDirection(player);
 	}
 
+	public static TreeConfiguration findConfig(World world, BlockPos pos) {
+		for (TreeConfiguration treeConfig : Config.treeConfigurations) {
+			if (treeConfig.matches(blockName(pos, world))) {
+				return treeConfig;
+			}
+		}
+		return null;
+	}
+
 	/*
 	 * Setup the basic settings of the tree
 	 */
@@ -84,11 +93,7 @@ public class Tree implements Runnable {
 		base = pos;
 		this.world = world;
 		addEstimateBlock(base, 0);
-		for (TreeConfiguration treeConfig : Config.treeConfigurations) {
-			if (treeConfig.matches(blockName(base, world))) {
-				this.config = treeConfig;
-			}
-		}
+		this.config = findConfig(world, pos);
 		if (this.config == null) {
 			System.out.println(blockName(base, world) + " block has no tree configuration");
 			throw new Exception("The chopped log type is unknown and not setup");
@@ -123,6 +128,7 @@ public class Tree implements Runnable {
 	 */
 	private void getPossibleTree() throws Exception {
 		BuilderQueueComparer comp = new BuilderQueueComparer(estimatedTree);
+		try {
 		while (!queue.isEmpty()) {
 			Collections.sort(queue, comp);
 			BlockPos blockStep = queue.pollFirst();
@@ -140,7 +146,7 @@ public class Tree implements Runnable {
 
 						boolean logAbove = isWood(inspectPos.add(0, 1, 0));
 						int y = inspectPos.getY();
-						boolean onSolid = onSolid(inspectPos, world);
+						boolean isTrunk = isTrunk(inspectPos, world, config);
 						Boolean yMatch = (y == base.getY());
 						if (y > base.getY()) {
 							wentUp = true;
@@ -161,7 +167,7 @@ public class Tree implements Runnable {
 							continue;
 						}
 						// If not directly connected to the tree search down for a base
-						if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && onSolid
+						if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk
 								&& (Math.abs(inspectPos.getX() - base.getX()) > 1
 										|| Math.abs(inspectPos.getZ() - base.getZ()) > 1)
 
@@ -189,7 +195,7 @@ public class Tree implements Runnable {
 						 * 
 						 */
 						if (main && log && ((cantDrag(world, inspectPos) && !yMatch)
-								|| (yMatch && logAbove && onSolid && !wentUp)) && leafStep == 0) {
+								|| (yMatch && logAbove && isTrunk && !wentUp)) && leafStep == 0) {
 							estimatedTree.clear();
 							queue.clear();
 							return;
@@ -203,6 +209,10 @@ public class Tree implements Runnable {
 				}
 			}
 		}
+		} catch (Exception ex) {
+			throw ex;
+		}
+		
 	}
 
 	/*
@@ -288,29 +298,31 @@ public class Tree implements Runnable {
 		while (!estimatedTreeQueue.isEmpty()) {
 			BlockPos from = estimatedTreeQueue.pollFirst();
 			Boolean mine = true;
+			int leafStep = estimatedTree.get(from);
+			double distance = horizontalDistance(base, from);
+			if (distance > config.Radius() || leafStep >= config.Leaf_limit()) {
+				continue;
+			}
 			for (Tree otherTree : nearbyTrees) {
-				if (otherTree.myBlock(from, horizontalDistance(base, from), estimatedTree.get(from))) {
+				if (otherTree.myBlock(from, distance, leafStep)) {
 					mine = false;
 					break;
 				}
 			}
 			if (mine && base != from) {
-				if (
-						isWood(from)
-						&& (from.getY() == base.getY() + 1 || from.getY() == base.getY() + 2)
-						&& (
-								(fallZ != 0 && (isWood(from.add(1, 0, 0)) || isWood(from.add(-1, 0, 0))))
-						|| (fallX != 0 && (isWood(from.add(0, 0, 1)) || isWood(from.add(0, 0, -1)))))) {
+				if (isWood(from) && (from.getY() == base.getY() + 1 || from.getY() == base.getY() + 2)
+						&& ((fallZ != 0 && (isWood(from.add(1, 0, 0)) || isWood(from.add(-1, 0, 0))))
+								|| (fallX != 0 && (isWood(from.add(0, 0, 1)) || isWood(from.add(0, 0, -1)))))) {
 					if (from.getX() * fallX > (fallOffset + base.getX()) * fallX) {
 						fallOffset = from.getX() - base.getX();
 					} else if (from.getZ() * fallZ > (fallOffset + base.getZ()) * fallZ) {
 						fallOffset = from.getZ() - base.getZ();
 					}
 				}
-				realisticTree.add(from);				
+				realisticTree.add(from);
 			}
 		}
-		while(!realisticTree.isEmpty()) {
+		while (!realisticTree.isEmpty()) {
 			BlockPos from = realisticTree.pollFirst();
 			IBlockState state2 = world.getBlockState(from);
 			Boolean leaves = state2.getBlock().isLeaves(state2, world, from);
@@ -500,9 +512,14 @@ public class Tree implements Runnable {
 	}
 
 	/*
-	 * Is a log on a solid block (dirt, sand etc)
+	 * If min vertical logs is 0 it only checks for the log being on a solid block,
+	 * otherwise it also checks the log is vertically surrounded by the given number of
+	 * blocks, this is useful for some BOP trees that have hollow centres or that
+	 * get built floating in water.
 	 */
-	public static final Boolean onSolid(BlockPos pos, World world) {
+	public static final Boolean isTrunk(BlockPos pos, World world, TreeConfiguration config) {
+
+		// Normal tree check, requires the tree to be sat on a solid block
 		Boolean log = true;
 		while (log) {
 			pos = pos.add(0, -1, 0);
@@ -514,7 +531,27 @@ public class Tree implements Runnable {
 				}
 			}
 		}
-		return false;
+
+		if (config.Min_vertical_logs() == 0) {
+			return false;
+		} else {
+			// Instead check for at least 4 vertical log blocks above and below
+			int below = 0;
+			for (int i = 1; i < config.Min_vertical_logs(); i++) {
+				if (!isWood(pos.add(0, -i, 0), world)) {
+					break;
+				}
+				below++;
+			}
+			int above = 0;
+			for (int i = 1; i < config.Min_vertical_logs(); i++) {
+				if (!isWood(pos.add(0, i, 0), world)) {
+					break;
+				}
+				above++;
+			}
+			return (1 + below + above) >= config.Min_vertical_logs();
+		}
 	}
 
 	/*

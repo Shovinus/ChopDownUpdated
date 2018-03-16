@@ -3,7 +3,7 @@
   "modid": "chopdownupdated",
   "name": "Chop Down Updated",
   "description": "Allows cutting down an entire tree in one go...",
-  "version": "${version}",
+  "version": "1.0.0",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
