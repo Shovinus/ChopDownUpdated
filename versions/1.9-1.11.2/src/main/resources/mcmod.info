@@ -1,0 +1,16 @@
+[
+{
+  "modid": "chopdownupdated",
+  "name": "Chop Down Updated",
+  "description": "Allows cutting down an entire tree in one go...",
+  "version": "1.0.1",
+  "mcversion": "*",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Shovinus","Ternsip"],
+  "credits": "Ternsip for the starting point",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

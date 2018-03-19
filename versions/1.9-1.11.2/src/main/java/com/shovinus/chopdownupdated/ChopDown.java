@@ -24,14 +24,19 @@ import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.tree.Tree;
 
-@Mod(modid = ChopDown.MODID, name = ChopDown.MODNAME, version = ChopDown.VERSION, acceptableRemoteVersions = "*", 
+@Mod(
+		modid = ChopDown.MODID,
+		name = ChopDown.MODNAME,
+		version = ChopDown.VERSION, 
+		acceptedMinecraftVersions = "[1.9,1.11.2]",
+		acceptableRemoteVersions = "*", 
 guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
 public class ChopDown {
 	ExecutorService executor;
 	
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.0.0";
+	public static final String VERSION = "1.0.1";
 	public static final String AUTHOR = "Shovinus";/*Original Idea by Ternsip,however the mod does not really 
 	resemble that in any way other that the turning of blocks in to falling entities with a push out of 1 per y height.*/
 	public static LinkedList<Tree> FallingTrees = new LinkedList<Tree>();
