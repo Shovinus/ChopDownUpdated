@@ -14,7 +14,8 @@ Features
 
 Installation
 + Download jar for your version
-[1.10.2](versions/1.10.2/bin/chopdownupdated-0.9.0-1.10.2.jar?raw=true)
+[1.12.2+](https://github.com/Shovinus/ChopDownUpdated/raw/master/versions/1.12.2/bin/ChopDown%20Updated%20(1.12.2%2B)-1.0.1.jar)
+[1.9-1.11.2](https://github.com/Shovinus/ChopDownUpdated/raw/master/versions/1.9-1.11.2/bin/ChopDown%20Updated%20(1.9-1.11.2)-1.0.1.jar)
 + Put the jar to your minecraft mods folder
 
 This mod is not really like the first, the first by Ternsip was a very cool idea and very simple, however while using it there were a few issues I found, for example ternsips version uses a 3d radius as apposed to horizontal, meaning that large jungle and spruce trees end up with their tops floating in mid air.
