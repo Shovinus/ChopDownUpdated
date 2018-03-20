@@ -1,5 +1,2 @@
-/builds/*/*
-
-!/builds/*/bin
-!/builds/*/src
-*.ini
+*desktop.ini
+*.idea/*
