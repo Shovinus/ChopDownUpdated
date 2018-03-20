@@ -11,6 +11,7 @@ import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 
 import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
@@ -21,6 +22,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.FluidRegistry;
 
 public class Tree implements Runnable {
 
@@ -450,7 +452,14 @@ public class Tree implements Runnable {
 		}
 		return state;
 	}
-
+	private void dropDrops(BlockPos pos,IBlockState state) {
+		// Do drops at location)
+		for (ItemStack stacky : state.getBlock().getDrops(world, pos, state, 0)) {
+			EntityItem entityitem = new EntityItem(world, pos.getX(),  pos.getY(),  pos.getZ(), stacky);
+			entityitem.setDefaultPickupDelay();
+			world.spawnEntity(entityitem);
+		}
+	}
 	/*
 	 * Drops a block in the world (basically moves it if it can, does block drop if
 	 * it can't, handles falling entity and calculated drop) Also handles debug
@@ -473,12 +482,7 @@ public class Tree implements Runnable {
 		}
 		IBlockState state = rotateLog(world, world.getBlockState(pos));
 		if (!(isAir(newPos) || isPassable(newPos)) || (isLeaves(pos) && Config.breakLeaves)) {
-			// Do drops at location)
-			for (ItemStack stacky : state.getBlock().getDrops(world, pos, state, 0)) {
-				EntityItem entityitem = new EntityItem(world, player.posX, player.posY, player.posZ, stacky);
-				entityitem.setDefaultPickupDelay();
-				world.spawnEntity(entityitem);
-			}
+			dropDrops(pos,state);
 			world.setBlockState(pos, Blocks.AIR.getDefaultState());
 			return;
 		}
@@ -494,8 +498,12 @@ public class Tree implements Runnable {
 				world.spawnEntity(fallingBlock);
 			} else {
 
-				while (isAir(newPos.add(0, -1, 0)) && newPos.add(0, -1, 0).getY() > 0) {
-					newPos = newPos.add(0, -1, 0);
+				while ((isAir(newPos.add(0, -1, 0))||isPassable(newPos.add(0, -1, 0))) && newPos.add(0, -1, 0).getY() > 0) {
+					newPos = newPos.add(0, -1, 0);					
+				}
+				IBlockState state2 = world.getBlockState(newPos);
+				if(!isAir(newPos)) {
+					dropDrops(newPos,state2);
 				}
 				world.setBlockState(newPos, state);
 			}
