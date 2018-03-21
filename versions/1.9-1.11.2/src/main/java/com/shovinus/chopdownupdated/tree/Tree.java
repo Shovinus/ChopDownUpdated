@@ -21,8 +21,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fluids.FluidRegistry;
-
 public class Tree implements Runnable {
 
 	BlockPos base;
@@ -169,8 +167,8 @@ public class Tree implements Runnable {
 						}
 						// If not directly connected to the tree search down for a base
 						if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk
-								&& (Math.abs(inspectPos.getX() - base.getX()) > 1
-										|| Math.abs(inspectPos.getZ() - base.getZ()) > 1)
+								&& (Math.abs(inspectPos.getX() - base.getX()) > config.Trunk_Radius()
+										|| Math.abs(inspectPos.getZ() - base.getZ()) > config.Trunk_Radius())
 
 						) {
 							// Its the trunk of another tree, check to see if we already have this tree in
@@ -188,6 +186,10 @@ public class Tree implements Runnable {
 								}
 							}
 							continue;
+						} else if (main && log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk){
+							estimatedTree.clear();
+							queue.clear();
+							return;
 						}
 
 						/*
@@ -195,8 +197,14 @@ public class Tree implements Runnable {
 						 * cases of issues building with logs in houses)
 						 * 
 						 */
-						if (main && log && ((cantDrag(world, inspectPos) && !yMatch)
-								|| (yMatch && logAbove && isTrunk && !wentUp)) && leafStep == 0) {
+						if (main && 
+								log && 
+								(
+										(cantDrag(world, inspectPos) && !yMatch) ||
+										(yMatch && logAbove && isTrunk && !wentUp)
+								) && 
+								leafStep == 0
+							) {
 							estimatedTree.clear();
 							queue.clear();
 							return;

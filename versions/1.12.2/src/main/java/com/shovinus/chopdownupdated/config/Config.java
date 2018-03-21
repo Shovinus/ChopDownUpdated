@@ -46,7 +46,7 @@ public class Config {
 	}
 	public static String[] DefaultTreeConfigs () {
 		return new String[] {
-				"{\"radius\":13,\"blocks\":[\"biomesoplenty:log_0:4\",\"biomesoplenty:leaves_3:7\"]}",
+				"{\"radius\":13,\"trunk_radius\":3,\"blocks\":[\"biomesoplenty:log_0:4\",\"biomesoplenty:leaves_3:7\"]}",
 				"{\"blocks\":[\"biomesoplenty:log_0:5\",\"biomesoplenty:leaves_2:2\",\"biomesoplenty:leaves_2:1\"]}",
 				"{\"blocks\":[\"biomesoplenty:log_0:7\",\"biomesoplenty:leaves_1:6\"]}",
 				"{\"blocks\":[\"biomesoplenty:log_1:4\",\"biomesoplenty:leaves_0:6\"]}",
@@ -67,8 +67,8 @@ public class Config {
 				"{\"blocks\":[\"forestry:logs.0:3\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"forestry:logs.1:0\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"forestry:logs.1:1\",\"forestry:leaves:0\"]}",
-				"{\"radius\":10,\"blocks\":[\"forestry:logs.1:2\",\"forestry:leaves:0\"]}",
-				"{\"radius\":10,\"blocks\":[\"forestry:logs.2:0\",\"forestry:leaves:0\"]}",
+				"{\"radius\":10,\"trunk_radius\":2,\"blocks\":[\"forestry:logs.1:2\",\"forestry:leaves:0\"]}",
+				"{\"radius\":10,\"trunk_radius\":2,\"blocks\":[\"forestry:logs.2:0\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"forestry:logs.2:1\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"forestry:logs.2:2\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"forestry:logs.2:3\",\"forestry:leaves:0\"]}",
@@ -111,7 +111,7 @@ public class Config {
 				"{\"blocks\":[\"natura:overworld_logs2:1\",\"natura:overworld_leaves2:1\"]}",
 				"{\"blocks\":[\"natura:overworld_logs2:2\",\"natura:overworld_leaves2:2\"]}",
 				"{\"blocks\":[\"natura:overworld_logs2:3\",\"natura:overworld_leaves2:3\"]}",
-				"{\"radius\":32,\"leaf_limit\":32,\"blocks\":[\"natura:redwood_logs:0\",\"natura:redwood_logs:1\",\"natura:redwood_logs:2\",\"natura:redwood_leaves:0\"]}", };
+				"{\"radius\":32,\"leaf_limit\":32,\"trunk_radius\":8,\"blocks\":[\"natura:redwood_logs:0\",\"natura:redwood_logs:1\",\"natura:redwood_logs:2\",\"natura:redwood_leaves:0\"]}", };
 	}
 	public static void reloadConfig() {
 

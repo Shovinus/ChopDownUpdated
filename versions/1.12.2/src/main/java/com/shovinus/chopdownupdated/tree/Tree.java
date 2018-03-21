@@ -11,7 +11,6 @@ import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 
 import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
@@ -22,7 +21,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fluids.FluidRegistry;
 
 public class Tree implements Runnable {
 
@@ -169,9 +167,10 @@ public class Tree implements Runnable {
 							continue;
 						}
 						// If not directly connected to the tree search down for a base
+						// If not directly connected to the tree search down for a base
 						if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk
-								&& (Math.abs(inspectPos.getX() - base.getX()) > 1
-										|| Math.abs(inspectPos.getZ() - base.getZ()) > 1)
+								&& (Math.abs(inspectPos.getX() - base.getX()) > config.Trunk_Radius()
+										|| Math.abs(inspectPos.getZ() - base.getZ()) > config.Trunk_Radius())
 
 						) {
 							// Its the trunk of another tree, check to see if we already have this tree in
@@ -189,6 +188,10 @@ public class Tree implements Runnable {
 								}
 							}
 							continue;
+						} else if (main && log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk){
+							estimatedTree.clear();
+							queue.clear();
+							return;
 						}
 
 						/*

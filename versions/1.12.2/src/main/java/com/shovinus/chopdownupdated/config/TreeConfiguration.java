@@ -13,6 +13,12 @@ public class TreeConfiguration {
 	public int Leaf_limit() {
 		return leaf_limit == 0?8:leaf_limit;
 	}
+	/*
+	 * Maximum steps from a log a leaf can be
+	 */
+	public int Trunk_Radius() {
+		return trunk_radius == 0?1:trunk_radius;
+	}
 	public int Min_vertical_logs() {
 		return min_vertical_logs;
 	}
@@ -23,12 +29,14 @@ public class TreeConfiguration {
 	
 	private int radius = 8;
 	private int leaf_limit = 8;
+	private int trunk_radius = 1;
 	private int min_vertical_logs = 0;
 	private String[] blocks;
 
-	public TreeConfiguration(int radius, int leaf_limit, int min_logs,String... blocks) {
+	public TreeConfiguration(int radius, int leaf_limit, int min_logs, int trunk_radius, String... blocks) {
 		this.radius = radius;
 		this.leaf_limit = leaf_limit;
+		this.trunk_radius = trunk_radius;
 		this.blocks = blocks;
 		this.min_vertical_logs = min_logs;
 	}		
