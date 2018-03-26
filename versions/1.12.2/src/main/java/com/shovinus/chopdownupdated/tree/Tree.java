@@ -200,7 +200,7 @@ public class Tree implements Runnable {
 						 * 
 						 */
 						if (main && log && ((cantDrag(world, inspectPos) && !yMatch)
-								|| (yMatch && logAbove && isTrunk && !wentUp)) && leafStep == 0) {
+								|| (yMatch && logAbove && !wentUp)) && leafStep == 0) {
 							estimatedTree.clear();
 							queue.clear();
 							return;

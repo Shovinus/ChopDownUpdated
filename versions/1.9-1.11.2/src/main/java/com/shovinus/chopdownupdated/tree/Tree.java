@@ -201,7 +201,7 @@ public class Tree implements Runnable {
 								log && 
 								(
 										(cantDrag(world, inspectPos) && !yMatch) ||
-										(yMatch && logAbove && isTrunk && !wentUp)
+										(yMatch && logAbove && !wentUp)
 								) && 
 								leafStep == 0
 							) {
