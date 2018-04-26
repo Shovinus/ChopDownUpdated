@@ -11,7 +11,7 @@ public class GuiConfigFactoryChopDown implements IModGuiFactory {
 	@Override
 	public void initialize(Minecraft minecraftInstance) {
 
-	}	
+	}
 
 	@Nullable
 	@Override

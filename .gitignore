@@ -1,2 +1,6 @@
 *desktop.ini
 *.idea/*
+versions/1.12.2/src/main/java/.idea/.name
+versions/1.12.2/src/main/java/.idea/java.iml
+versions/1.12.2/src/main/java/.idea/modules.xml
+*.xml

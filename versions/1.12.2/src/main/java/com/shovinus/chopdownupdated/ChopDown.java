@@ -36,7 +36,7 @@ public class ChopDown {
 	
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.0.1";
+	public static final String VERSION = "1.0.6";
 	public static final String AUTHOR = "Shovinus";/*Original Idea by Ternsip,however the mod does not really 
 	resemble that in any way other that the turning of blocks in to falling entities with a push out of 1 per y height.*/
 	public static LinkedList<Tree> FallingTrees = new LinkedList<Tree>();
@@ -65,10 +65,11 @@ public class ChopDown {
 			return;
 		}
 		TreeConfiguration config = Tree.findConfig(world,pos);
-		
-		if (config == null || !Tree.isTrunk(pos, world,config) || !Tree.isWood(pos.add(0, 1, 0), world)) {
+		BlockPos playerStanding = event.getPlayer().getPosition();
+		if (config == null || !Tree.isTrunk(pos, world,config) || !Tree.isWood(pos.add(0, 1, 0), world)|| (playerStanding.getX() == 0 && playerStanding.getZ()==0)) {
 			return;
 		}
+
 		//Check to see if this player has already started a tree chop event.
 		for (Tree tree : FallingTrees) {
 			if (tree.player == event.getPlayer()) {
@@ -88,11 +89,13 @@ public class ChopDown {
 		}
 		
 	}
-
+	static int tick = 0;
 	@SubscribeEvent
 	public void onTick(TickEvent.ServerTickEvent event) {
 		try {
-			
+			tick++;
+			if(tick%4== 0) {
+				tick = 0;
 			for (Tree tree : FallingTrees) {
 				if (tree.finishedCalculation) {
 					if(tree.dropBlocks()) {
@@ -102,6 +105,7 @@ public class ChopDown {
 				if(tree.failedToBuild) {
 					FallingTrees.remove(tree);
 				}
+			}
 			}
 		} catch (Exception ex) {
 			System.out.println("Error while continuing to chop trees");

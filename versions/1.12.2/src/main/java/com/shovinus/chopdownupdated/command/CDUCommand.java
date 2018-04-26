@@ -43,7 +43,9 @@ public class CDUCommand extends CommandBase {
 				+ stateProperty(sender, "lowerLogs")
 				+ ": Logs are lowered to the bottom of leaves to create a more realistic looking fall finish\n"
 				+ stateProperty(sender, "breakLeaves")
-				+ ": Leaves are all broken and dumped on the feller only logs drop";
+				+ ": Leaves are all broken and do their drops only logs fall\n"
+				+ stateProperty(sender, "useFallingEntities")
+				+ ": Blocks are turned in to falling entites for the fall rather than moved a block at a time (looks nicer but open to part block pop off abuse)";
 	}
 
 	@Override
@@ -97,8 +99,8 @@ public class CDUCommand extends CommandBase {
 			setValue = getValue(value, playerConfig.makeGlass);
 			playerConfig.makeGlass = setValue;
 		} else if (action.equals("dontDrop")) {
-			setValue = getValue(value, playerConfig.dontDrop);
-			playerConfig.dontDrop = setValue;
+			setValue = getValue(value, playerConfig.dontFell);
+			playerConfig.dontFell = setValue;
 		} else if (action.equals("showBlockName")) {
 			setValue = getValue(value, playerConfig.showBlockName);
 			playerConfig.showBlockName = setValue;
@@ -108,6 +110,9 @@ public class CDUCommand extends CommandBase {
 		} else if (action.equals("breakLeaves")) {
 			setValue = getValue(value,getMainConfigValue("breakLeaves"));
 			setMainConfigValue("breakLeaves",setValue);
+		} else if (action.equals("useFallingEntities")) {
+			setValue = getValue(value,getMainConfigValue("useFallingEntities"));
+			setMainConfigValue("useFallingEntities",setValue);
 		} else {
 			return;
 		}
@@ -127,7 +132,7 @@ public class CDUCommand extends CommandBase {
 			BlockPos pos) {
 		if (args.length == 1) {
 			return getListOfStringsMatchingLastWord(args, 
-					 "makeGlass","dontDrop", "showBlockName","lowerLogs","breakLeaves");
+					 "makeGlass","dontDrop", "showBlockName","lowerLogs","breakLeaves","useFallingEntities");
 
 		}
 		if (args.length == 2) {
@@ -145,7 +150,7 @@ public class CDUCommand extends CommandBase {
 			return (getPlayerConfig(sender).makeGlass ? "[x] " : "[ ] ") + "makeGlass";
 		}
 		if (property.equals("dontDrop")) {
-			return (getPlayerConfig(sender).dontDrop ? "[x] " : "[ ] ") + "dontDrop";
+			return (getPlayerConfig(sender).dontFell ? "[x] " : "[ ] ") + "dontDrop";
 		}
 		if (property.equals("showBlockName")) {
 			return (getPlayerConfig(sender).showBlockName ? "[x] " : "[ ] ") + "showBlockName";
@@ -155,6 +160,9 @@ public class CDUCommand extends CommandBase {
 		}
 		if (property.equals("breakLeaves")) {
 			return (getMainConfigValue("breakLeaves") ? "[x] " : "[ ] ") + "breakLeaves";
+		}
+		if (property.equals("useFallingEntities")) {
+			return (getMainConfigValue("useFallingEntities") ? "[x] " : "[ ] ") + "useFallingEntities";
 		}
 		return "";
 	}

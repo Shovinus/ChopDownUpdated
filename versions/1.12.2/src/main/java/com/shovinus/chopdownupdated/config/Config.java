@@ -23,6 +23,8 @@ public class Config {
 	public static boolean breakLeaves;
 	public static int maxDropsPerTickPerTree;
 	public static int maxFallingBlockBeforeManualMove;
+	public static boolean useFallingEntities;
+
 	public static HashMap<UUID, PersonalConfig> playerConfigs = new HashMap<UUID, PersonalConfig>();
 	public static TreeConfiguration[] treeConfigurations;
 
@@ -41,7 +43,7 @@ public class Config {
 	public static Configuration config;
 
 	public static void load(FMLPreInitializationEvent event) {
-		config = new Configuration(event.getSuggestedConfigurationFile(),"1.0.2");
+		config = new Configuration(event.getSuggestedConfigurationFile(),"1.0.4");
 		reloadConfig();
 	}
 	public static String[] DefaultTreeConfigs () {
@@ -130,6 +132,9 @@ public class Config {
 				"List of possible trees, i.e. spruce log and spruce leaves, this makes felling trees more acurate for mixed trees, it also allows large trees like natura redwoods to be chopped more acurately, normally this tree would get ignored because its leaves reach further than a normal tree and its radius is much wider");
 		breakLeaves = config.getBoolean("breakLeaves", CATEGORY, false,
 				"When you chop a tree down the leaves all fall off and do their drops instead of falling with the tree, this can be better as a) less load and b)The falling of trees gets less messy, you still need to chop the logs but the leaves don't get in the way");
+		useFallingEntities = config.getBoolean("useFallingEntities", CATEGORY, true,
+				"Whether to use falling entities for the block fall, looks slightly smoother but can be abused to pop off logs instead of having to chop them");
+
 		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();
 		for (String treeConfig : tempTreeConfig) {
 			tempTreeConfigurations.add(new Gson().fromJson(treeConfig, TreeConfiguration.class));

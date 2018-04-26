@@ -6,6 +6,7 @@ class TreeMovePair {
 		public BlockPos to;
 		public BlockPos from;
 		public Boolean leaves;
+		public Boolean moved = false;
 
 		public TreeMovePair(BlockPos from, BlockPos to, Boolean leaves) {
 			this.from = from;
