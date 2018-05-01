@@ -43,7 +43,7 @@ public class Config {
 	public static Configuration config;
 
 	public static void load(FMLPreInitializationEvent event) {
-		config = new Configuration(event.getSuggestedConfigurationFile(),"1.0.4");
+		config = new Configuration(event.getSuggestedConfigurationFile(),"1.0.7");
 		reloadConfig();
 	}
 	public static String[] DefaultTreeConfigs () {
@@ -97,7 +97,7 @@ public class Config {
 				"{\"blocks\":[\"harvestcraft:pammaple:0\",\"minecraft:leaves:1\"]}",
 				"{\"blocks\":[\"ic2:rubber_wood:0\",\"ic2:leaves:0\"]}",
 				"{\"blocks\":[\"integrateddynamics:menrilLog:0\",\"integrateddynamics:menrilFilledLog:0\",\"integrateddynamics:menrilLeaves:0\",\"integrateddynamics:menril_log:0\",\"integrateddynamics:menril_leaves:0\",\"integrateddynamics:menril_log_filled:0\"]}",
-				"{\"blocks\":[\"minecraft:log:0\",\"minecraft:leaves:0\",\"biomesoplenty:leaves_0:1\",\"biomesoplenty:leaves_3:9\",\"biomesoplenty:leaves_3:5\",\"biomesoplenty:leaves_2:3\",\"biomesoplenty:leaves_1:5\",\"forestry:leaves:0\"]}",
+				"{\"blocks\":[\"minecraft:log:0\",\"minecraft:leaves:0\",\"biomesoplenty:leaves_0:1\",\"biomesoplenty:leaves_3:9\",\"biomesoplenty:leaves_3:5\",\"biomesoplenty:leaves_2:3\",\"biomesoplenty:leaves_1:5\",\"forestry:leaves:0\",\"traverse:red_autumnal_leaves:0\",\"traverse:brown_autumnal_leaves:0\"]}",
 				"{\"blocks\":[\"minecraft:log:1\",\"minecraft:leaves:1\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"minecraft:log:2\",\"minecraft:leaves:2\",\"biomesoplenty:leaves_0:0\",\"forestry:leaves:0\"]}",
 				"{\"blocks\":[\"minecraft:log:3\",\"minecraft:leaves:3\",\"harvestcraft:pampaperbark:0\",\"forestry:leaves:0\"]}",
@@ -117,7 +117,23 @@ public class Config {
 				"{\"blocks\":[\"natura:overworld_logs2:3\",\"natura:overworld_leaves2:3\"]}",
 				"{\"radius\":32,\"leaf_limit\":32,\"trunk_radius\":8,\"blocks\":[\"natura:redwood_logs:0\",\"natura:redwood_logs:1\",\"natura:redwood_logs:2\",\"natura:redwood_leaves:0\"]}",
 				"{\"blocks\":[\"rustic:log:0\",\"rustic:leaves:0\"]}",
-				"{\"blocks\":[\"rustic:log:1\",\"rustic:leaves:1\"]}", };
+				"{\"blocks\":[\"rustic:log:1\",\"rustic:leaves:1\"]}",
+				"{\"blocks\":[\"terra:blackspruce_log:0\",\"terra:blackspruce_leaves:0\"]}",
+				"{\"blocks\":[\"terra:bluespruce_log:0\",\"terra:bluespruce_leaves:0\"]}",
+				"{\"blocks\":[\"terra:cherry_log:0\",\"terra:cherry_leaves_white:0\",\"terra:cherry_leaves_purple:0\"]}",
+				"{\"blocks\":[\"terra:ebony_log:0\",\"terra:palm_leaves:0\"]}",
+				"{\"blocks\":[\"terra:elm_log:0\",\"terra:elm_leaves:0\"]}",
+				"{\"blocks\":[\"terra:jacaranda_log:0\",\"terra:jacaranda_leaves_magenta:0\",\"terra:jacaranda_leaves_green:0\"]}",
+				"{\"blocks\":[\"terra:mahogany_log:0\",\"terra:mahogany_leaves:0\"]}",
+				"{\"blocks\":[\"terra:palm_log:0\",\"terra:palm_leaves:0\"]}",
+				"{\"blocks\":[\"terra:paulownia_log:0\",\"terra:paulownia_leaves_green:0\",\"terra:paulownia_leaves_white:0\",\"terra:paulownia_leaves_blue:0\"]}",
+				"{\"blocks\":[\"terra:redspruce_log:0\",\"terra:redspruce_leaves:0\"]}",
+				"{\"blocks\":[\"terra:whitespruce_log:0\",\"terra:whitespruce_leaves:0\"]}",
+				"{\"blocks\":[\"thaumcraft:log_greatwood:0\",\"thaumcraft:leaves_greatwood:0\"]}",
+				"{\"blocks\":[\"thaumcraft:log_silverwood:0\",\"thaumcraft:leaves_silverwood:0\"]}",
+				"{\"blocks\":[\"traverse:fir_log:0\",\"traverse:fir_leaves:0\"]}",
+				"{\"radius\":15,\"leaf_limit\":10,\"blocks\":[\"tropicraft:log:0\",\"tropicraft:leaves:0\"]}",
+				"{\"blocks\":[\"tropicraft:log:1\",\"tropicraft:leaves:1\"]}", };
 	}
 	public static void reloadConfig() {
 
