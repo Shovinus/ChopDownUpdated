@@ -17,6 +17,9 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -25,7 +28,7 @@ import net.minecraft.world.World;
 public class Tree implements Runnable {
 
 	BlockPos base;
-	World world;
+	public World world;
 	public EntityPlayer player;
 	Boolean main = false;
 	LinkedList<BlockPos> queue = new LinkedList<BlockPos>();
@@ -129,96 +132,96 @@ public class Tree implements Runnable {
 	private void getPossibleTree() throws Exception {
 		BuilderQueueComparer comp = new BuilderQueueComparer(estimatedTree);
 		try {
-		while (!queue.isEmpty()) {
-			Collections.sort(queue, comp);
-			BlockPos blockStep = queue.pollFirst();
-			for (int dy = -1; dy <= 1; ++dy) {
-				for (int dx = -1; dx <= 1; ++dx) {
-					for (int dz = -1; dz <= 1; ++dz) {
-						int dzA = dz * dz, dxA = dx * dx, dyA = dy * dy;
-						int stepInc = (dzA + dxA + dyA);
-						BlockPos inspectPos = blockStep.add(dx, dy, dz);
-						boolean log = isWood(inspectPos);
-						boolean leaves = isLeaves(inspectPos);
-						if (!(log || leaves)) {
-							continue;
-						}
+			while (!queue.isEmpty()) {
+				Collections.sort(queue, comp);
+				BlockPos blockStep = queue.pollFirst();
+				for (int dy = -1; dy <= 1; ++dy) {
+					for (int dx = -1; dx <= 1; ++dx) {
+						for (int dz = -1; dz <= 1; ++dz) {
+							int dzA = dz * dz, dxA = dx * dx, dyA = dy * dy;
+							int stepInc = (dzA + dxA + dyA);
+							BlockPos inspectPos = blockStep.add(dx, dy, dz);
+							boolean log = isWood(inspectPos);
+							boolean leaves = isLeaves(inspectPos);
+							if (!(log || leaves)) {
+								continue;
+							}
 
-						boolean logAbove = isWood(inspectPos.add(0, 1, 0));
-						int y = inspectPos.getY();
-						boolean isTrunk = isTrunk(inspectPos, world, config);
-						Boolean yMatch = (y == base.getY());
-						if (y > base.getY()) {
-							wentUp = true;
-						}
-						Integer leafStep = getEstimate(blockStep);
-						if (leafStep == null) {
-							leafStep = 0;
-						}
+							boolean logAbove = isWood(inspectPos.add(0, 1, 0));
+							int y = inspectPos.getY();
+							boolean isTrunk = isTrunk(inspectPos, world, config);
+							Boolean yMatch = (y == base.getY());
+							if (y > base.getY()) {
+								wentUp = true;
+							}
+							Integer leafStep = getEstimate(blockStep);
+							if (leafStep == null) {
+								leafStep = 0;
+							}
 
-						leafStep = leafStep + (leaves ? stepInc : 0);
+							leafStep = leafStep + (leaves ? stepInc : 0);
 
-						// Don't chop below the chop point, nor if this is the base point, nor if
-						// leafStep reached, nor if radius limit reaches, nor if this block is our main
-						// block
-						if (!(log || leaves) || inspectPos.compareTo(base) == 0 || y < base.getY()
-								|| leafStep >= leafLimit || horizontalDistance(base, inspectPos) > radius
-								|| !config.matches(blockName(inspectPos, world))) {
-							continue;
-						}
-						// If not directly connected to the tree search down for a base
-						if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk
-								&& (Math.abs(inspectPos.getX() - base.getX()) > config.Trunk_Radius()
-										|| Math.abs(inspectPos.getZ() - base.getZ()) > config.Trunk_Radius())
+							// Don't chop below the chop point, nor if this is the base point, nor if
+							// leafStep reached, nor if radius limit reaches, nor if this block is our main
+							// block
+							if (!(log || leaves) || inspectPos.compareTo(base) == 0 || y < base.getY()
+									|| leafStep >= leafLimit || horizontalDistance(base, inspectPos) > radius
+									|| !config.matches(blockName(inspectPos, world))) {
+								continue;
+							}
+							// If not directly connected to the tree search down for a base
+							if (log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos) && isTrunk
+									&& (Math.abs(inspectPos.getX() - base.getX()) > config.Trunk_Radius()
+											|| Math.abs(inspectPos.getZ() - base.getZ()) > config.Trunk_Radius())
 
-						) {
-							// Its the trunk of another tree, check to see if we already have this tree in
-							// the list, or add it.
-							if (main) {
-								Boolean treeFound = false;
-								for (Tree tree : nearbyTrees) {
-									if (tree.getEstimate(inspectPos) != null && tree.getEstimate(inspectPos) == 0) {
-										treeFound = true;
+							) {
+								// Its the trunk of another tree, check to see if we already have this tree in
+								// the list, or add it.
+								if (main) {
+									Boolean treeFound = false;
+									for (Tree tree : nearbyTrees) {
+										if (tree.getEstimate(inspectPos) != null && tree.getEstimate(inspectPos) == 0) {
+											treeFound = true;
+										}
+									}
+									if (!treeFound) {
+										Tree otherTree = new Tree(inspectPos, world);
+										nearbyTrees.add(otherTree);
 									}
 								}
-								if (!treeFound) {
-									Tree otherTree = new Tree(inspectPos, world);
-									nearbyTrees.add(otherTree);
-								}
-							}
-							continue;
+								continue;
 							} else if (main && log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos)
-									&& isTrunk && isWood(inspectPos.add(0,1,0))) {
-							estimatedTree.clear();
-							queue.clear();
-							return;
-						}
+									&& isTrunk && isWood(inspectPos.add(0, 1, 0))) {
+								estimatedTree.clear();
+								queue.clear();
+								return;
+							}
 
-						/*
-						 * If a log but next to a solid none tree block then fail to chop (avoids 99% of
-						 * cases of issues building with logs in houses)
-						 * 
-						 */
+							/*
+							 * If a log but next to a solid none tree block then fail to chop (avoids 99% of
+							 * cases of issues building with logs in houses)
+							 * 
+							 */
 							if (main && log
 									&& ((cantDrag(world, inspectPos) && !yMatch) || (yMatch && logAbove && !wentUp))
 									&& leafStep == 0) {
-							estimatedTree.clear();
-							queue.clear();
-							return;
-						}
-						if (!yMatch || !cantDrag(world, inspectPos)) {
-							addEstimateBlock(inspectPos, leafStep);
-						} else {
-							continue;
+								estimatedTree.clear();
+								queue.clear();
+								return;
+							}
+							if (!yMatch || !cantDrag(world, inspectPos)) {
+								addEstimateBlock(inspectPos, leafStep);
+							} else {
+								continue;
+							}
 						}
 					}
 				}
 			}
-		}
 		} catch (Exception ex) {
 			throw ex;
 		}
-		
+
 	}
 
 	/*
@@ -369,7 +372,7 @@ public class Tree implements Runnable {
 				return false;
 			}
 		}
-		if(!fallingBlocksList.isEmpty()) {
+		if (!fallingBlocksList.isEmpty()) {
 			return false;
 		}
 		return true;
@@ -440,7 +443,7 @@ public class Tree implements Runnable {
 	/*
 	 * Trys to rotate the log along the axis given
 	 */
-	private IBlockState rotateLog(World world, IBlockState state) {
+	public IBlockState rotateLog(World world, IBlockState state) {
 		IProperty<?> foundProp = null;
 		for (net.minecraft.block.properties.IProperty<?> prop : state.getProperties().keySet()) {
 			if (prop.getName().equals("axis")) {
@@ -465,16 +468,16 @@ public class Tree implements Runnable {
 		}
 		return state;
 	}
-	
-	private void dropDrops(BlockPos pos, BlockPos dropPos, IBlockState state) {
+
+	public void dropDrops(BlockPos pos, BlockPos dropPos, IBlockState state) {
 		// Do drops at location)
 		for (ItemStack stacky : state.getBlock().getDrops(world, pos, state, 0)) {
 			EntityItem entityitem = new EntityItem(world, dropPos.getX(), dropPos.getY(), dropPos.getZ(), stacky);
 			entityitem.setDefaultPickupDelay();
 			world.spawnEntity(entityitem);
 		}
-	}	
-	
+	}
+
 	/*
 	 * Drops a block in the world (basically moves it if it can, does block drop if
 	 * it can't, handles falling entity and calculated drop) Also handles debug
@@ -507,7 +510,7 @@ public class Tree implements Runnable {
 			dropDrops(pair.from, pair.to, state);
 			world.setBlockState(pair.from, Blocks.AIR.getDefaultState());
 			return true;
-		} else if(!CanMoveTo(pair.to)){	
+		} else if (!CanMoveTo(pair.to)) {
 			return true;
 		}
 		// Can move to this block, set the source block to air, set the from block as to
@@ -517,47 +520,40 @@ public class Tree implements Runnable {
 		pair.moved = true;
 
 		if (playerConfig.dontFell) {
-			world.setBlockState(pair.to, state);
+			pair.move();
 		} else {
 			if (!UseSolid) {
 				if (Config.useFallingEntities) {
-					//Use falling entities
+					// Use falling entities
 					EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
-							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state);
+							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state, pair.tile);
 					fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
 					fallingBlock.fallTime = 1;
 					world.spawnEntity(fallingBlock);
 				} else {
-					
-					IBlockState state2 = world.getBlockState(pair.to);
-					if (!isAir(pair.to) && isPassable(pair.to)) {
-						dropDrops(pair.to, pair.to, state2);
-					}
-					world.setBlockState(pair.to, state);
+					pair.move();
 					pair.to = pair.to.add(0, -1, 0);
 					return false;
 				}
 			} else {
-				ManuallyDrop(state,pair.to);
+				ManuallyDrop(pair, state);
 			}
 		}
 		return true;
 	}
-	private void ManuallyDrop(IBlockState state, BlockPos pos) {
+
+	private void ManuallyDrop(TreeMovePair pair, IBlockState state) {		
 		// Move large trees to final resting place
-		while (CanMoveTo(pos.add(0, -1, 0))) {
-			pos = pos.add(0, -1, 0);
-		}
-		IBlockState state2 = world.getBlockState(pos);
-		if (!isAir(pos)) {
-			dropDrops(pos, pos, state2);
-		}
-		world.setBlockState(pos, state);
+		while (CanMoveTo(pair.to.add(0, -1, 0))) {
+			pair.to = pair.to.add(0, -1, 0);
+		}		
+		pair.move();
 	}
+
 	private boolean CanMoveTo(BlockPos pos) {
-		return isAir(pos) || isPassable(pos)
-		&& pos.getY() > 0;
+		return (isAir(pos) || isPassable(pos)) && pos.getY() > 0;
 	}
+
 	/*
 	 * Gets the distance on the x-z plane only
 	 */
@@ -635,7 +631,7 @@ public class Tree implements Runnable {
 	/*
 	 * Is the block at this position an air block;
 	 */
-	private Boolean isAir(BlockPos pos) {
+	public Boolean isAir(BlockPos pos) {
 		return world.getBlockState(pos).getBlock().isAir(world.getBlockState(pos), world, pos);
 	}
 
@@ -679,14 +675,19 @@ public class Tree implements Runnable {
 	 */
 	public static class EntityFallingBlock extends net.minecraft.entity.item.EntityFallingBlock {
 
-		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState) {
+		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState,
+				TileEntity tile) {
 			super(worldIn, x, y, z, fallingBlockState);
+			if (tile != null) {
+				tileEntityData = tile.writeToNBT(new NBTTagCompound());
+			}
 		}
 
 
 		@Nullable
 		@Override
 		public EntityItem entityDropItem(ItemStack stack, float offsetY) {
+
 			IBlockState state = getBlock();
 			// TODO check if this works for none MC leaves
 			if (state != null && state.getBlock() instanceof BlockLeaves) {

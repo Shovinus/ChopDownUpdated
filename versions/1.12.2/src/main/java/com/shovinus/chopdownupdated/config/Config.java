@@ -43,7 +43,7 @@ public class Config {
 	public static Configuration config;
 
 	public static void load(FMLPreInitializationEvent event) {
-		config = new Configuration(event.getSuggestedConfigurationFile(),"1.0.8");
+		config = new Configuration(event.getSuggestedConfigurationFile(),"1.0.9");
 		reloadConfig();
 	}
 	public static String[] DefaultTreeConfigs () {

@@ -17,6 +17,9 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -25,7 +28,7 @@ import net.minecraft.world.World;
 public class Tree implements Runnable {
 
 	BlockPos base;
-	World world;
+	public World world;
 	public EntityPlayer player;
 	Boolean main = false;
 	LinkedList<BlockPos> queue = new LinkedList<BlockPos>();
@@ -333,7 +336,7 @@ public class Tree implements Runnable {
 			IBlockState state2 = world.getBlockState(from);
 			Boolean leaves = state2.getBlock().isLeaves(state2, world, from);
 			BlockPos to = repositionBlock(from);
-			TreeMovePair pair = new TreeMovePair(from, to, leaves);
+			TreeMovePair pair = new TreeMovePair(from, to, this);
 			fallingBlocks.put(pair.to, pair);
 		}
 		fallingBlocksList = new LinkedList<BlockPos>(fallingBlocks.keySet());
@@ -440,7 +443,7 @@ public class Tree implements Runnable {
 	/*
 	 * Trys to rotate the log along the axis given
 	 */
-	private IBlockState rotateLog(World world, IBlockState state) {
+	public IBlockState rotateLog(World world, IBlockState state) {
 		IProperty<?> foundProp = null;
 		for (net.minecraft.block.properties.IProperty<?> prop : state.getProperties().keySet()) {
 			if (prop.getName().equals("axis")) {
@@ -466,7 +469,7 @@ public class Tree implements Runnable {
 		return state;
 	}
 
-	private void dropDrops(BlockPos pos, BlockPos dropPos, IBlockState state) {
+	public void dropDrops(BlockPos pos, BlockPos dropPos, IBlockState state) {
 		// Do drops at location)
 		for (ItemStack stacky : state.getBlock().getDrops(world, pos, state, 0)) {
 			EntityItem entityitem = new EntityItem(world, dropPos.getX(), dropPos.getY(), dropPos.getZ(), stacky);
@@ -517,47 +520,40 @@ public class Tree implements Runnable {
 		pair.moved = true;
 
 		if (playerConfig.dontFell) {
-			world.setBlockState(pair.to, state);
+			pair.move();
 		} else {
 			if (!UseSolid) {
 				if (Config.useFallingEntities) {
 					//Use falling entities
 					EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
-							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state);
+							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state,pair.tile);
 					fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
 					fallingBlock.fallTime = 1;
 					world.spawnEntityInWorld(fallingBlock);
 				} else {
-					
-					IBlockState state2 = world.getBlockState(pair.to);
-					if (!isAir(pair.to) && isPassable(pair.to)) {
-						dropDrops(pair.to, pair.to, state2);
-					}
-					world.setBlockState(pair.to, state);
+					pair.move();
 					pair.to = pair.to.add(0, -1, 0);
 					return false;
 				}
 			} else {
-				ManuallyDrop(state,pair.to);
+				ManuallyDrop(pair, state);
 			}
 		}
 		return true;
 	}
-	private void ManuallyDrop(IBlockState state, BlockPos pos) {
+
+	private void ManuallyDrop(TreeMovePair pair, IBlockState state) {
 		// Move large trees to final resting place
-		while (CanMoveTo(pos.add(0, -1, 0))) {
-			pos = pos.add(0, -1, 0);
+		while (CanMoveTo(pair.to.add(0, -1, 0))) {
+			pair.to = pair.to.add(0, -1, 0);
 		}
-		IBlockState state2 = world.getBlockState(pos);
-		if (!isAir(pos)) {
-			dropDrops(pos, pos, state2);
+		pair.move();
 		}
-		world.setBlockState(pos, state);
-	}
+
 	private boolean CanMoveTo(BlockPos pos) {
-		return isAir(pos) || isPassable(pos)
-		&& pos.getY() > 0;
+		return (isAir(pos) || isPassable(pos)) && pos.getY() > 0;
 	}
+
 	/*
 	 * Gets the distance on the x-z plane only
 	 */
@@ -635,7 +631,7 @@ public class Tree implements Runnable {
 	/*
 	 * Is the block at this position an air block;
 	 */
-	private Boolean isAir(BlockPos pos) {
+	public Boolean isAir(BlockPos pos) {
 		return world.getBlockState(pos).getBlock().isAir(world.getBlockState(pos), world, pos);
 	}
 
@@ -679,14 +675,18 @@ public class Tree implements Runnable {
 	 */
 	public static class EntityFallingBlock extends net.minecraft.entity.item.EntityFallingBlock {
 
-		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState) {
+		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState,TileEntity tile) {			
 			super(worldIn, x, y, z, fallingBlockState);
+			if(tile != null) {
+				tileEntityData = tile.writeToNBT(new NBTTagCompound());
+			}
 		}
 		
 		
 		@Nullable
 		@Override
 		public EntityItem entityDropItem(ItemStack stack, float offsetY) {
+			
 			IBlockState state = getBlock();
 			// TODO check if this works for none MC leaves
 			if (state != null && state.getBlock() instanceof BlockLeaves) {
