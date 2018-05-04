@@ -336,7 +336,7 @@ public class Tree implements Runnable {
 			IBlockState state2 = world.getBlockState(from);
 			Boolean leaves = state2.getBlock().isLeaves(state2, world, from);
 			BlockPos to = repositionBlock(from);
-			TreeMovePair pair = new TreeMovePair(from, to, leaves);
+			TreeMovePair pair = new TreeMovePair(from, to, this);
 			fallingBlocks.put(pair.to, pair);
 		}
 		fallingBlocksList = new LinkedList<BlockPos>(fallingBlocks.keySet());
