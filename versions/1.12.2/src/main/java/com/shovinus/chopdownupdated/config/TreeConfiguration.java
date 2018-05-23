@@ -1,5 +1,7 @@
 package com.shovinus.chopdownupdated.config;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 public class TreeConfiguration {
 	/*
 	 * The horizontal radius from the trunk to check for tree members
@@ -24,6 +26,9 @@ public class TreeConfiguration {
 	}
 
 	public String[] getBlocks() {
+		if(blocks == null) {
+			blocks = (String[]) ArrayUtils.addAll(logs,Leaves());
+		}
 		return blocks;
 	}
 	
@@ -31,23 +36,36 @@ public class TreeConfiguration {
 	private int leaf_limit = 8;
 	private int trunk_radius = 1;
 	private int min_vertical_logs = 0;
-	private String[] blocks;
+	private String[] logs;
+	private String[] leaves;
+	private String[] leaves_merged;
+	private String[] blocks = null;
 
-	public TreeConfiguration(int radius, int leaf_limit, int min_logs, int trunk_radius, String... blocks) {
+	public TreeConfiguration(int radius, int leaf_limit, int min_logs, int trunk_radius, String[] logs, String[] leaves) {
 		this.radius = radius;
 		this.leaf_limit = leaf_limit;
 		this.trunk_radius = trunk_radius;
-		this.blocks = blocks;
+		this.logs = logs;
+		this.leaves = leaves;
 		this.min_vertical_logs = min_logs;
 	}		
 	
 	public boolean matches(String name) {
-		for(String block : blocks) {
+
+		for(String block : getBlocks()) {
 			if(block.equals(name)) {
 				return true;
 			}
 		}
 		return false;
 	}
-
+	public String[] Leaves() {
+		if(leaves_merged == null) {
+			leaves_merged = Config.MergeArray(leaves,Config.sharedLeaves);
+		}
+		return leaves_merged;
+	}
+	public String[] Logs() {
+		return logs;
+	}
 }

@@ -12,7 +12,7 @@ public class GuiConfigFactoryChopDown implements IModGuiFactory {
 	public void initialize(Minecraft minecraftInstance) {
 
 	}
-	
+
 	@Override
 	public Class<? extends GuiScreen> mainConfigGuiClass() {
 		return GuiConfigChopDown.class;

@@ -6,6 +6,8 @@ import java.util.LinkedList;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
@@ -334,7 +336,6 @@ public class Tree implements Runnable {
 		while (!realisticTree.isEmpty()) {
 			BlockPos from = realisticTree.pollFirst();
 			IBlockState state2 = world.getBlockState(from);
-			Boolean leaves = state2.getBlock().isLeaves(state2, world, from);
 			BlockPos to = repositionBlock(from);
 			TreeMovePair pair = new TreeMovePair(from, to, this);
 			fallingBlocks.put(pair.to, pair);
@@ -575,8 +576,7 @@ public class Tree implements Runnable {
 		Boolean log = true;
 		while (log) {
 			pos = pos.add(0, -1, 0);
-			IBlockState yState = world.getBlockState(pos);
-			if (!yState.getBlock().isWood(world, pos)) {
+			if (!isWood(pos,world)) {
 				log = false;
 				if (!isDraggable(world, pos)) {
 					return true;
@@ -624,7 +624,7 @@ public class Tree implements Runnable {
 	 */
 	private static boolean isDraggable(World world, BlockPos pos) {
 		IBlockState state = world.getBlockState(pos);
-		return state.getBlock().isWood(world, pos) || state.getBlock().isLeaves(state, world, pos)
+		return isWood(pos,world) || isLeaves(pos,world)
 				|| state.getBlock().isAir(state, world, pos) || state.getBlock().isPassable(world, pos);
 	}
 
@@ -652,22 +652,22 @@ public class Tree implements Runnable {
 	/*
 	 * Is the block at this position a log
 	 */
-	public static boolean isWood(BlockPos pos, World world) {
-		return world.getBlockState(pos).getBlock().isWood(world, pos);
+	public static boolean isWood(BlockPos pos, World world) {		
+		return ArrayUtils.contains(Config.logs, blockName(pos,world));
 	}
 
 	/*
 	 * Is the block at this position a log
 	 */
 	public static boolean isLeaves(BlockPos pos, World world) {
-		return world.getBlockState(pos).getBlock().isLeaves(world.getBlockState(pos), world, pos);
+		return ArrayUtils.contains(Config.leaves, blockName(pos,world));
 	}
 
 	/*
 	 * Is the block at this position leaves
 	 */
 	public boolean isLeaves(BlockPos pos) {
-		return world.getBlockState(pos).getBlock().isLeaves(world.getBlockState(pos), world, pos);
+		return isLeaves(pos, world);
 	}
 
 	/*
@@ -675,7 +675,8 @@ public class Tree implements Runnable {
 	 */
 	public static class EntityFallingBlock extends net.minecraft.entity.item.EntityFallingBlock {
 
-		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState,TileEntity tile) {			
+		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState,
+				TileEntity tile) {
 			super(worldIn, x, y, z, fallingBlockState);
 			if(tile != null) {
 				tileEntityData = tile.writeToNBT(new NBTTagCompound());

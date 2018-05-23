@@ -6,6 +6,8 @@ import java.util.LinkedList;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
@@ -191,7 +193,7 @@ public class Tree implements Runnable {
 								}
 								continue;
 							} else if (main && log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos)
-									&& isTrunk && isWood(inspectPos.add(0, 1, 0))) {
+									&& isTrunk && isWood(inspectPos.add(0,1,0))) {
 								estimatedTree.clear();
 								queue.clear();
 								return;
@@ -334,7 +336,6 @@ public class Tree implements Runnable {
 		while (!realisticTree.isEmpty()) {
 			BlockPos from = realisticTree.pollFirst();
 			IBlockState state2 = world.getBlockState(from);
-			Boolean leaves = state2.getBlock().isLeaves(state2, world, from);
 			BlockPos to = repositionBlock(from);
 			TreeMovePair pair = new TreeMovePair(from, to, this);
 			fallingBlocks.put(pair.to, pair);
@@ -372,7 +373,7 @@ public class Tree implements Runnable {
 				return false;
 			}
 		}
-		if (!fallingBlocksList.isEmpty()) {
+		if(!fallingBlocksList.isEmpty()) {
 			return false;
 		}
 		return true;
@@ -510,7 +511,7 @@ public class Tree implements Runnable {
 			dropDrops(pair.from, pair.to, state);
 			world.setBlockState(pair.from, Blocks.AIR.getDefaultState());
 			return true;
-		} else if (!CanMoveTo(pair.to)) {
+		} else if(!CanMoveTo(pair.to)){
 			return true;
 		}
 		// Can move to this block, set the source block to air, set the from block as to
@@ -524,9 +525,9 @@ public class Tree implements Runnable {
 		} else {
 			if (!UseSolid) {
 				if (Config.useFallingEntities) {
-					// Use falling entities
+					//Use falling entities
 					EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
-							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state, pair.tile);
+							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state,pair.tile);
 					fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
 					fallingBlock.fallTime = 1;
 					world.spawnEntity(fallingBlock);
@@ -542,13 +543,13 @@ public class Tree implements Runnable {
 		return true;
 	}
 
-	private void ManuallyDrop(TreeMovePair pair, IBlockState state) {		
+	private void ManuallyDrop(TreeMovePair pair, IBlockState state) {
 		// Move large trees to final resting place
 		while (CanMoveTo(pair.to.add(0, -1, 0))) {
 			pair.to = pair.to.add(0, -1, 0);
-		}		
+		}
 		pair.move();
-	}
+		}
 
 	private boolean CanMoveTo(BlockPos pos) {
 		return (isAir(pos) || isPassable(pos)) && pos.getY() > 0;
@@ -575,8 +576,7 @@ public class Tree implements Runnable {
 		Boolean log = true;
 		while (log) {
 			pos = pos.add(0, -1, 0);
-			IBlockState yState = world.getBlockState(pos);
-			if (!yState.getBlock().isWood(world, pos)) {
+			if (!isWood(pos,world)) {
 				log = false;
 				if (!isDraggable(world, pos)) {
 					return true;
@@ -624,7 +624,7 @@ public class Tree implements Runnable {
 	 */
 	private static boolean isDraggable(World world, BlockPos pos) {
 		IBlockState state = world.getBlockState(pos);
-		return state.getBlock().isWood(world, pos) || state.getBlock().isLeaves(state, world, pos)
+		return isWood(pos,world) || isLeaves(pos,world)
 				|| state.getBlock().isAir(state, world, pos) || state.getBlock().isPassable(world, pos);
 	}
 
@@ -653,21 +653,21 @@ public class Tree implements Runnable {
 	 * Is the block at this position a log
 	 */
 	public static boolean isWood(BlockPos pos, World world) {
-		return world.getBlockState(pos).getBlock().isWood(world, pos);
+		return ArrayUtils.contains(Config.logs, blockName(pos,world));
 	}
 
 	/*
 	 * Is the block at this position a log
 	 */
 	public static boolean isLeaves(BlockPos pos, World world) {
-		return world.getBlockState(pos).getBlock().isLeaves(world.getBlockState(pos), world, pos);
+		return ArrayUtils.contains(Config.leaves, blockName(pos,world));
 	}
 
 	/*
 	 * Is the block at this position leaves
 	 */
 	public boolean isLeaves(BlockPos pos) {
-		return world.getBlockState(pos).getBlock().isLeaves(world.getBlockState(pos), world, pos);
+		return isLeaves(pos, world);
 	}
 
 	/*
