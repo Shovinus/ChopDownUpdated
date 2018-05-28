@@ -10,6 +10,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import com.google.gson.Gson;
 import com.shovinus.chopdownupdated.ChopDown;
 
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,6 +27,7 @@ public class Config {
 	public static int maxDropsPerTickPerTree;
 	public static int maxFallingBlockBeforeManualMove;
 	public static boolean useFallingEntities;
+	public static String[] allowedPlayers;
 
 	public static HashMap<UUID, PersonalConfig> playerConfigs = new HashMap<UUID, PersonalConfig>();
 	public static TreeConfiguration[] treeConfigurations;
@@ -207,7 +209,10 @@ public class Config {
 		sharedLeaves = config.getStringList("sharedLeaves", CATEGORY, new String[] {
 			"harvestcraft:beehive:0"
 		}, "Not necessarily leaves, objects that if seemingly attached to the tree should fall down with it, such as beehives");
-
+		allowedPlayers = config.getStringList("allowedPlayers", CATEGORY, new String[] {
+				EntityPlayerMP.class.getName(),
+				"micdoodle8.mods.galacticraft.core.entities.player.GCEntityPlayerMP"
+		}, "List of all the player classes allowed to chop down trees, used to distinguish fake and real players");
 		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();
 		for (String treeConfig : tempTreeConfig) {
 			tempTreeConfigurations.add(new Gson().fromJson(treeConfig, TreeConfiguration.class));			

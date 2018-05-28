@@ -27,7 +27,7 @@ public class TreeConfiguration {
 
 	public String[] getBlocks() {
 		if(blocks == null) {
-			blocks = (String[]) ArrayUtils.addAll(logs,leaves);
+			blocks = (String[]) ArrayUtils.addAll(logs,Leaves());
 		}
 		return blocks;
 	}
@@ -38,6 +38,7 @@ public class TreeConfiguration {
 	private int min_vertical_logs = 0;
 	private String[] logs;
 	private String[] leaves;
+	private String[] leaves_merged;
 	private String[] blocks = null;
 
 	public TreeConfiguration(int radius, int leaf_limit, int min_logs, int trunk_radius, String[] logs, String[] leaves) {
@@ -45,7 +46,7 @@ public class TreeConfiguration {
 		this.leaf_limit = leaf_limit;
 		this.trunk_radius = trunk_radius;
 		this.logs = logs;
-		this.leaves = Config.MergeArray(leaves,Config.sharedLeaves);
+		this.leaves = leaves;
 		this.min_vertical_logs = min_logs;
 	}		
 	
@@ -59,7 +60,10 @@ public class TreeConfiguration {
 		return false;
 	}
 	public String[] Leaves() {
-		return leaves;
+		if(leaves_merged == null) {
+			leaves_merged = Config.MergeArray(leaves,Config.sharedLeaves);
+		}
+		return leaves_merged;
 	}
 	public String[] Logs() {
 		return logs;
