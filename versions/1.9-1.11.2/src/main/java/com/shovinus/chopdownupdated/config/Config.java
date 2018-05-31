@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -28,6 +29,7 @@ public class Config {
 	public static int maxFallingBlockBeforeManualMove;
 	public static boolean useFallingEntities;
 	public static String[] allowedPlayers;
+	public static String[] ignoreTools;
 
 	public static HashMap<UUID, PersonalConfig> playerConfigs = new HashMap<UUID, PersonalConfig>();
 	public static TreeConfiguration[] treeConfigurations;
@@ -213,6 +215,10 @@ public class Config {
 				EntityPlayerMP.class.getName(),
 				"micdoodle8.mods.galacticraft.core.entities.player.GCEntityPlayerMP"
 		}, "List of all the player classes allowed to chop down trees, used to distinguish fake and real players");
+		ignoreTools = config.getStringList("ignoreTools", CATEGORY, new String[] {
+				"tconstruct:lumberaxe:.*"
+		}, "List of tools to ignore chop down on, such as tinkers lumberaxe, any tool that veinmines or similar should be ignored for chopdown");
+
 		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();
 		for (String treeConfig : tempTreeConfig) {
 			tempTreeConfigurations.add(new Gson().fromJson(treeConfig, TreeConfiguration.class));			
@@ -221,6 +227,14 @@ public class Config {
 		GenerateLeavesAndLogs();
 		config.save();
 
+	}
+	public static boolean MatchesTool(String name) {
+		for(String tool : Config.ignoreTools) {
+			if(tool.equals(name) || name.matches(tool)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	static String[] MergeArray(String[] a, String[] b) {
 		String[] d = a;

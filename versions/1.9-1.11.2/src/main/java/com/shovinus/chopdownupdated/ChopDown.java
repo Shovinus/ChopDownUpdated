@@ -37,7 +37,7 @@ public class ChopDown {
 	
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.0.11";
+	public static final String VERSION = "1.0.12";
 	public static final String AUTHOR = "Shovinus";/*
 													 * Original Idea by Ternsip,however the mod does not really resemble
 													 * that in any way other that the turning of blocks in to falling
@@ -65,7 +65,11 @@ public class ChopDown {
 
 		World world = event.getWorld();
 		BlockPos pos = event.getPos();	
+
 		if(!Tree.isWood(pos, world) || !ArrayUtils.contains(Config.allowedPlayers,event.getPlayer().getClass().getName())) {
+			return;
+		}
+		if(event.getPlayer().getHeldItemMainhand() != null && Config.MatchesTool(Tree.stackName(event.getPlayer().getHeldItemMainhand()))) {
 			return;
 		}
 		TreeConfiguration config = Tree.findConfig(world,pos);
@@ -124,6 +128,9 @@ public class ChopDown {
 			World world = event.getWorld();
 			BlockPos pos = event.getPos();
 			event.getEntityPlayer().addChatComponentMessage(new TextComponentString(Tree.blockName(pos, world)));
+			if(event.getEntityPlayer().getHeldItemMainhand() != null) {
+				event.getEntityPlayer().addChatComponentMessage(new TextComponentString(Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
+			}
 		}
 	}
 }

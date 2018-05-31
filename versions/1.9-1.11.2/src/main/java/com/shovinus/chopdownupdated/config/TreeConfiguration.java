@@ -53,12 +53,12 @@ public class TreeConfiguration {
 	public boolean matches(String name) {
 
 		for(String block : getBlocks()) {
-			if(block.equals(name)) {
+			if(block.equals(name) || name.matches(block)) {
 				return true;
 			}
 		}
 		return false;
-	}
+	}	
 	public String[] Leaves() {
 		if(leaves_merged == null) {
 			leaves_merged = Config.MergeArray(leaves,Config.sharedLeaves);

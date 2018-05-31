@@ -31,7 +31,7 @@ public class ChopDown {
 
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.0.11";
+	public static final String VERSION = "1.0.12";
 	public static final String AUTHOR = "Shovinus";/*
 													 * Original Idea by Ternsip,however the mod does not really resemble
 													 * that in any way other that the turning of blocks in to falling
@@ -63,6 +63,9 @@ public class ChopDown {
 		if(!Tree.isWood(pos, world) || !ArrayUtils.contains(Config.allowedPlayers,event.getPlayer().getClass().getName())) {
 			return;
 		}
+		if(event.getPlayer().getHeldItemMainhand() != null && Config.MatchesTool(Tree.stackName(event.getPlayer().getHeldItemMainhand()))) {
+			return;
+		}
 		TreeConfiguration config = Tree.findConfig(world,pos);
 		BlockPos playerStanding = event.getPlayer().getPosition();
 		if (config == null || !Tree.isTrunk(pos, world,config) || !Tree.isWood(pos.add(0, 1, 0), world)|| (playerStanding.getX() == 0 && playerStanding.getZ()==0)) {
@@ -77,6 +80,8 @@ public class ChopDown {
 				return;
 			}
 		}
+		
+		
 		//Initialise the tree and add it to the list, get the executor to start chopping it down;;
 		Tree tree;
 		try {
@@ -119,6 +124,9 @@ public class ChopDown {
 			World world = event.getWorld();
 			BlockPos pos = event.getPos();
 			event.getEntityPlayer().sendMessage(new TextComponentString(Tree.blockName(pos, world)));
+			if(event.getEntityPlayer().getHeldItemMainhand() != null) {
+				event.getEntityPlayer().sendMessage(new TextComponentString(Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
+			}
 		}
 	}
 }

@@ -294,10 +294,13 @@ public class Tree implements Runnable {
 	@SuppressWarnings("deprecation")
 	public static String blockName(BlockPos pos, World world) {
 		ItemStack stack = world.getBlockState(pos).getBlock().getItem(world, pos, world.getBlockState(pos));
+		return stackName(stack);
+	}
+	public static String stackName(ItemStack stack){
 		ResourceLocation loc = stack.getItem().getRegistryName();
 		int damageValue = stack.getItem().getDamage(stack);
 		return loc.getResourceDomain() + ":" + loc.getResourcePath() + ":" + String.valueOf(damageValue);
-	}
+	}	
 
 	/*
 	 * Checks the blocks in the estimated tree against other trees that were found
