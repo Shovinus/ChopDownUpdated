@@ -213,7 +213,8 @@ public class Config {
 		}, "Not necessarily leaves, objects that if seemingly attached to the tree should fall down with it, such as beehives");
 		allowedPlayers = config.getStringList("allowedPlayers", CATEGORY, new String[] {
 				EntityPlayerMP.class.getName(),
-				"micdoodle8.mods.galacticraft.core.entities.player.GCEntityPlayerMP"
+				"micdoodle8.mods.galacticraft.core.entities.player.GCEntityPlayerMP",
+				"clayborn.universalremote.hooks.entity.HookedEntityPlayerMP"
 		}, "List of all the player classes allowed to chop down trees, used to distinguish fake and real players");
 		ignoreTools = config.getStringList("ignoreTools", CATEGORY, new String[] {
 				"tconstruct:lumberaxe:.*"

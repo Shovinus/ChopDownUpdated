@@ -123,10 +123,11 @@ public class ChopDown {
 		if (Config.getPlayerConfig(event.getEntityPlayer().getUniqueID()).showBlockName) {
 			World world = event.getWorld();
 			BlockPos pos = event.getPos();
-			event.getEntityPlayer().sendMessage(new TextComponentString(Tree.blockName(pos, world)));
+			event.getEntityPlayer().sendMessage(new TextComponentString("Block:" + Tree.blockName(pos, world)));
 			if(event.getEntityPlayer().getHeldItemMainhand() != null) {
-				event.getEntityPlayer().sendMessage(new TextComponentString(Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
+				event.getEntityPlayer().sendMessage(new TextComponentString("Tool:" + Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
 			}
+			event.getEntityPlayer().sendMessage(new TextComponentString("Player Class:" + event.getEntityPlayer().getClass().getName()));
 		}
 	}
 }
