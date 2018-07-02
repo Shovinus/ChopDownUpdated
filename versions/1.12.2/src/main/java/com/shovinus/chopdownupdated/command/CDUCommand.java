@@ -10,6 +10,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
@@ -30,6 +31,9 @@ public class CDUCommand extends CommandBase {
 
 	@Override
 	public String getUsage(ICommandSender sender) {
+		if(sender == null || !(sender instanceof EntityPlayer || sender instanceof EntityPlayerMP)) {
+			return "";
+		}
 		return "cdu makeGlass/dontDrop/showBlockName/lowerLogs/breakLeaves[true/false]\n"
 				+ stateProperty(sender, "makeGlass") + ": Turn felled trees in to "
 				+ "glass to view what we think a tree should look like\n" + 
