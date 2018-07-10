@@ -68,6 +68,10 @@ public class Tree implements Runnable {
 	 */
 	public Tree(BlockPos pos, World world) throws Exception {
 		initTree(pos, world);
+		while (isLog(pos.add(0,-1,0))) {
+			pos = pos.add(0,-1,0);
+		}
+		base = pos;
 		getPossibleTree();
 	}
 
@@ -84,7 +88,7 @@ public class Tree implements Runnable {
 
 	public static TreeConfiguration findConfig(World world, BlockPos pos) {
 		for (TreeConfiguration treeConfig : Config.treeConfigurations) {
-			if (treeConfig.matches(blockName(pos, world))) {
+			if (treeConfig.isLog(blockName(pos, world))) {
 				return treeConfig;
 			}
 		}
@@ -126,7 +130,18 @@ public class Tree implements Runnable {
 			axis = EnumFallAxis.X;
 		}
 	}
-
+	public boolean isLog(BlockPos pos) {		
+		return isLog(blockName(pos, world));
+	}
+	private boolean isLog(String name) {
+		return config.isLog(name);
+	}
+	public boolean isLeaf(BlockPos pos) {		
+		return isLeaf(blockName(pos, world));
+	}
+	private boolean isLeaf(String name) {
+		return config.isLeaf(name);
+	}
 	/*
 	 * Gets a possible tree, but only if it thinks the trunk is completely cut
 	 * through
@@ -143,13 +158,19 @@ public class Tree implements Runnable {
 							int dzA = dz * dz, dxA = dx * dx, dyA = dy * dy;
 							int stepInc = (dzA + dxA + dyA);
 							BlockPos inspectPos = blockStep.add(dx, dy, dz);
-							boolean log = isWood(inspectPos);
-							boolean leaves = isLeaves(inspectPos);
-							if (!(log || leaves)) {
+							String blockName =	blockName(inspectPos, world);
+							
+						
+							boolean log = isLog(blockName);
+							boolean leaf = false;
+							if(!log) {
+								leaf= isLeaf(blockName);
+							}
+							if(!(log || leaf)) {
 								continue;
 							}
-
-							boolean logAbove = isWood(inspectPos.add(0, 1, 0));
+							
+							boolean logAbove = isLog(inspectPos.add(0, 1, 0));
 							int y = inspectPos.getY();
 							boolean isTrunk = isTrunk(inspectPos, world, config);
 							Boolean yMatch = (y == base.getY());
@@ -161,14 +182,13 @@ public class Tree implements Runnable {
 								leafStep = 0;
 							}
 
-							leafStep = leafStep + (leaves ? stepInc : 0);
+							leafStep = leafStep + (leaf ? stepInc : 0);
 
 							// Don't chop below the chop point, nor if this is the base point, nor if
 							// leafStep reached, nor if radius limit reaches, nor if this block is our main
 							// block
-							if (!(log || leaves) || inspectPos.compareTo(base) == 0 || y < base.getY()
-									|| leafStep >= leafLimit || horizontalDistance(base, inspectPos) > radius
-									|| !config.matches(blockName(inspectPos, world))) {
+							if (inspectPos.compareTo(base) == 0 || y < base.getY()
+									|| leafStep >= leafLimit || horizontalDistance(base, inspectPos) > radius) {
 								continue;
 							}
 							// If not directly connected to the tree search down for a base
@@ -193,7 +213,7 @@ public class Tree implements Runnable {
 								}
 								continue;
 							} else if (main && log && (leafStep > 0 || dy < 0) && !estimatedTree.containsKey(inspectPos)
-									&& isTrunk && isWood(inspectPos.add(0,1,0))) {
+									&& isTrunk && isLog(inspectPos.add(0,1,0))) {
 								estimatedTree.clear();
 								queue.clear();
 								return;
@@ -205,13 +225,13 @@ public class Tree implements Runnable {
 							 * 
 							 */
 							if (main && log
-									&& ((cantDrag(world, inspectPos) && !yMatch) || (yMatch && logAbove && !wentUp))
+									&& ((cantDrag(world, inspectPos,config) && !yMatch) || (yMatch && logAbove && !wentUp))
 									&& leafStep == 0) {
 								estimatedTree.clear();
 								queue.clear();
 								return;
 							}
-							if (!yMatch || !cantDrag(world, inspectPos)) {
+							if (!yMatch || !cantDrag(world, inspectPos,config)) {
 								addEstimateBlock(inspectPos, leafStep);
 							} else {
 								continue;
@@ -297,10 +317,16 @@ public class Tree implements Runnable {
 		return stackName(stack);
 	}
 	public static String stackName(ItemStack stack){
-		ResourceLocation loc = stack.getItem().getRegistryName();
-		int damageValue = stack.getItem().getDamage(stack);
-		return loc.getResourceDomain() + ":" + loc.getResourcePath() + ":" + String.valueOf(damageValue);
+		try {
+			ResourceLocation loc = stack.getItem().getRegistryName();
+			int damageValue = stack.getItem().getDamage(stack);
+			return loc.getResourceDomain() + ":" + loc.getResourcePath() + ":" + String.valueOf(damageValue);
+		}
+		catch (Exception ex) { 
+			return "";
+		}
 	}
+
 	/*
 	 * Checks the blocks in the estimated tree against other trees that were found
 	 * to determine if the block more likely belongs to this tree or another
@@ -309,6 +335,7 @@ public class Tree implements Runnable {
 		estimatedTreeQueue = new LinkedList<BlockPos>(estimatedTree.keySet());
 		LinkedList<BlockPos> realisticTree = new LinkedList<BlockPos>();
 		while (!estimatedTreeQueue.isEmpty()) {
+			
 			BlockPos from = estimatedTreeQueue.pollFirst();
 			Boolean mine = true;
 			int leafStep = estimatedTree.get(from);
@@ -323,9 +350,9 @@ public class Tree implements Runnable {
 				}
 			}
 			if (mine && base != from) {
-				if (isWood(from) && (from.getY() == base.getY() + 1 || from.getY() == base.getY() + 2)
-						&& ((fallZ != 0 && (isWood(from.add(1, 0, 0)) || isWood(from.add(-1, 0, 0))))
-								|| (fallX != 0 && (isWood(from.add(0, 0, 1)) || isWood(from.add(0, 0, -1)))))) {
+				if (isLog(from) && (from.getY() == base.getY() + 1 || from.getY() == base.getY() + 2)
+						&& ((fallZ != 0 && (isLog(from.add(1, 0, 0)) || isLog(from.add(-1, 0, 0))))
+								|| (fallX != 0 && (isLog(from.add(0, 0, 1)) || isLog(from.add(0, 0, -1)))))) {
 					if (from.getX() * fallX > (fallOffset + base.getX()) * fallX) {
 						fallOffset = from.getX() - base.getX();
 					} else if (from.getZ() * fallZ > (fallOffset + base.getZ()) * fallZ) {
@@ -337,7 +364,6 @@ public class Tree implements Runnable {
 		}
 		while (!realisticTree.isEmpty()) {
 			BlockPos from = realisticTree.pollFirst();
-			IBlockState state2 = world.getBlockState(from);
 			BlockPos to = repositionBlock(from);
 			TreeMovePair pair = new TreeMovePair(from, to, this);
 			fallingBlocks.put(pair.to, pair);
@@ -487,13 +513,13 @@ public class Tree implements Runnable {
 	 * configs.
 	 */
 	private boolean drop(TreeMovePair pair, Boolean UseSolid) {
-		if (!(isWood(pair.from) || isLeaves(pair.from))) {
+		if (!(isLog(pair.from) || isLeaves(pair.from))) {
 			return true;
 		}
 		PersonalConfig playerConfig = Config.getPlayerConfig(player.getUniqueID());
 		// Turn the tree in to glass if set as don't drop;
 		if (playerConfig.makeGlass && playerConfig.dontFell) {
-			if (isWood(pair.from)) {
+			if (isLog(pair.from)) {
 				world.setBlockState(pair.from, Blocks.STAINED_GLASS.getStateFromMeta(1));
 			} else {
 				world.setBlockState(pair.from, Blocks.STAINED_GLASS.getStateFromMeta(2));
@@ -503,7 +529,7 @@ public class Tree implements Runnable {
 		// Get the state of the tree block (rotate the log if first time moving)
 		IBlockState state = world.getBlockState(pair.from);
 		IBlockState originalState = state;
-		if (!pair.moved && isWood(pair.from)) {
+		if (!pair.moved && isLog(pair.from)) {
 			state = rotateLog(world, state);
 		}
 		// If the target block is not passable or the source block is leaves and the
@@ -578,9 +604,9 @@ public class Tree implements Runnable {
 		Boolean log = true;
 		while (log) {
 			pos = pos.add(0, -1, 0);
-			if (!isWood(pos,world)) {
+			if (!config.isLog(blockName(pos, world))) {
 				log = false;
-				if (!isDraggable(world, pos)) {
+				if (!isDraggable(world, pos,config)) {
 					return true;
 				}
 			}
@@ -592,14 +618,14 @@ public class Tree implements Runnable {
 			// Instead check for at least 4 vertical log blocks above and below
 			int below = 0;
 			for (int i = 1; i < config.Min_vertical_logs(); i++) {
-				if (!isWood(pos.add(0, -i, 0), world)) {
+				if (!config.isLog(blockName(pos.add(0, -i, 0), world))) {
 					break;
 				}
 				below++;
 			}
 			int above = 0;
 			for (int i = 1; i < config.Min_vertical_logs(); i++) {
-				if (!isWood(pos.add(0, i, 0), world)) {
+				if (!config.isLog(blockName(pos.add(0, i, 0), world))) {
 					break;
 				}
 				above++;
@@ -612,10 +638,10 @@ public class Tree implements Runnable {
 	 * Is the block touching either air, a tree block or a passable block only on
 	 * all 6 sides
 	 */
-	private static boolean cantDrag(World world, BlockPos pos) {
-		if (!isDraggable(world, pos.add(1, 0, 0)) || !isDraggable(world, pos.add(-1, 0, 0))
-				|| !isDraggable(world, pos.add(0, 1, 0)) || !isDraggable(world, pos.add(0, -1, 0))
-				|| !isDraggable(world, pos.add(0, 0, 1)) || !isDraggable(world, pos.add(0, 0, -1))) {
+	private static boolean cantDrag(World world, BlockPos pos, TreeConfiguration tree) {
+		if (!isDraggable(world, pos.add(1, 0, 0),tree) || !isDraggable(world, pos.add(-1, 0, 0),tree)
+				|| !isDraggable(world, pos.add(0, 1, 0),tree) || !isDraggable(world, pos.add(0, -1, 0),tree)
+				|| !isDraggable(world, pos.add(0, 0, 1),tree) || !isDraggable(world, pos.add(0, 0, -1),tree)) {
 			return true;
 		}
 		return false;
@@ -624,10 +650,21 @@ public class Tree implements Runnable {
 	/*
 	 * Is this specific block either a tree block, air or a passable block
 	 */
-	private static boolean isDraggable(World world, BlockPos pos) {
+	private static boolean isDraggable(World world, BlockPos pos, TreeConfiguration tree) {
+		
 		IBlockState state = world.getBlockState(pos);
-		return isWood(pos,world) || isLeaves(pos,world)
-				|| state.getBlock().isAir(state, world, pos) || state.getBlock().isPassable(world, pos);
+		
+		if(state.getBlock().isAir(state, world, pos) || state.getBlock().isPassable(world, pos)) {
+			return true;
+			}
+		
+		if(tree != null) {
+			String name = blockName(pos,world);
+			if(tree.isLog(name)||tree.isLeaf(name)){
+				return true;
+			}
+		}
+			return isWood(pos,world) || isLeaves(pos,world);	 
 	}
 
 	/*
@@ -647,15 +684,14 @@ public class Tree implements Runnable {
 	/*
 	 * Is the block at this position a log
 	 */
-	public boolean isWood(BlockPos pos) {
-		return isWood(pos, world);
-	}
-
-	/*
-	 * Is the block at this position a log
-	 */
-	public static boolean isWood(BlockPos pos, World world) {		
-		return ArrayUtils.contains(Config.logs, blockName(pos,world));
+	public static boolean isWood(BlockPos pos, World world) {	
+		String blockName = blockName(pos,world);
+		for(String block : Config.logs) {
+			if(block.equals(blockName) || blockName.matches(block)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/*

@@ -37,7 +37,7 @@ public class ChopDown {
 	
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.0.13";
+	public static final String VERSION = "1.1.0";
 	public static final String AUTHOR = "Shovinus";/*
 													 * Original Idea by Ternsip,however the mod does not really resemble
 													 * that in any way other that the turning of blocks in to falling
@@ -102,7 +102,7 @@ public class ChopDown {
 	public void onTick(TickEvent.ServerTickEvent event) {
 		try {
 			tick++;
-			if (tick % 4 == 0) {
+			if (tick % 1 == 0) {
 				tick = 0;
 				for (Tree tree : FallingTrees) {
 					if (tree.finishedCalculation) {

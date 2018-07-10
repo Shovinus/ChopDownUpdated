@@ -25,13 +25,19 @@ import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.tree.Tree;
 
-@Mod(modid = ChopDown.MODID, name = ChopDown.MODNAME, version = ChopDown.VERSION, acceptedMinecraftVersions = "[1.12.2,)", acceptableRemoteVersions = "*", guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
+@Mod(
+		modid = ChopDown.MODID,
+		name = ChopDown.MODNAME,
+		version = ChopDown.VERSION,
+		acceptedMinecraftVersions = "[1.12.2]",
+		acceptableRemoteVersions = "*",
+guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
 public class ChopDown {
 	ExecutorService executor;
 
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.0.13";
+	public static final String VERSION = "1.1.0";
 	public static final String AUTHOR = "Shovinus";/*
 													 * Original Idea by Ternsip,however the mod does not really resemble
 													 * that in any way other that the turning of blocks in to falling
@@ -80,8 +86,6 @@ public class ChopDown {
 				return;
 			}
 		}
-		
-		
 		//Initialise the tree and add it to the list, get the executor to start chopping it down;;
 		Tree tree;
 		try {

@@ -23,7 +23,7 @@ class TreeMovePair {
 			leaves = tree.isLeaves(from);
 			tile = tree.world.getTileEntity(from);
 			state = tree.world.getBlockState(from);
-			if (tree.isWood(from)) {
+			if (tree.isLog(from)) {
 				state = tree.rotateLog(tree.world, state);
 			}
 			

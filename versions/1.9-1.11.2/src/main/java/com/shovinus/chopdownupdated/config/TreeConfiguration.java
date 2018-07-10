@@ -25,12 +25,7 @@ public class TreeConfiguration {
 		return min_vertical_logs;
 	}
 
-	public String[] getBlocks() {
-		if(blocks == null) {
-			blocks = (String[]) ArrayUtils.addAll(logs,Leaves());
-		}
-		return blocks;
-	}
+
 	
 	private int radius = 8;
 	private int leaf_limit = 8;
@@ -49,23 +44,36 @@ public class TreeConfiguration {
 		this.leaves = leaves;
 		this.min_vertical_logs = min_logs;
 	}		
-	
-	public boolean matches(String name) {
 
-		for(String block : getBlocks()) {
+	public boolean isLog(String name) {
+		for(String block : logs) {
 			if(block.equals(name) || name.matches(block)) {
 				return true;
 			}
 		}
 		return false;
-	}	
+	}
+	public boolean isLeaf(String name) {
+		for(String block : Leaves()) {
+			if(block.equals(name) || name.matches(block)) {
+				return true;
+			}
+	}
+	return false;
+	}
+	public String[] Logs() {
+		return logs;
+	}
 	public String[] Leaves() {
 		if(leaves_merged == null) {
 			leaves_merged = Config.MergeArray(leaves,Config.sharedLeaves);
 		}
 		return leaves_merged;
 	}
-	public String[] Logs() {
-		return logs;
+	public String[] Blocks() {
+		if(blocks == null) {
+			blocks = (String[]) ArrayUtils.addAll(logs,Leaves());
+		}
+		return blocks;
 	}
 }
