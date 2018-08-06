@@ -313,7 +313,7 @@ public class Tree implements Runnable {
 
 	@SuppressWarnings("deprecation")
 	public static String blockName(BlockPos pos, World world) {
-		ItemStack stack = world.getBlockState(pos).getBlock().getItem(world, pos, world.getBlockState(pos));
+		ItemStack stack = world.getBlockState(pos).getBlock().getPickBlock(world.getBlockState(pos), null, world, pos, null);
 		return stackName(stack);
 	}
 	public static String stackName(ItemStack stack){

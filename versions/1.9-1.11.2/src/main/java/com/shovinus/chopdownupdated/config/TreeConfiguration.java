@@ -7,13 +7,13 @@ public class TreeConfiguration {
 	 * The horizontal radius from the trunk to check for tree members
 	 */
 	public int Radius() {
-		return radius == 0?8:radius;
+		return radius == 0?9:radius;
 	}
 	/*
 	 * Maximum steps from a log a leaf can be
 	 */
 	public int Leaf_limit() {
-		return leaf_limit == 0?8:leaf_limit;
+		return leaf_limit == 0?12:leaf_limit;
 	}
 	/*
 	 * Maximum steps from a log a leaf can be
@@ -27,8 +27,8 @@ public class TreeConfiguration {
 
 
 	
-	private int radius = 8;
-	private int leaf_limit = 8;
+	private int radius = 9;
+	private int leaf_limit = 12;
 	private int trunk_radius = 1;
 	private int min_vertical_logs = 0;
 	private String[] logs;
