@@ -313,7 +313,18 @@ public class Tree implements Runnable {
 
 	@SuppressWarnings("deprecation")
 	public static String blockName(BlockPos pos, World world) {
-		ItemStack stack = world.getBlockState(pos).getBlock().getPickBlock(world.getBlockState(pos), null, world, pos, null);
+		ItemStack stack = null;
+		try {
+			stack = world.getBlockState(pos).getBlock().getPickBlock(world.getBlockState(pos), null, world, pos, null);
+		} catch (Exception ex){
+			try {
+			stack = world.getBlockState(pos).getBlock().getItem(world, pos, world.getBlockState(pos));
+			}catch(Exception ex2) {			
+			}
+		}
+		if(stack == null) {
+			return "unknown, getPickBlock and getItem not set";
+		}
 		return stackName(stack);
 	}
 	public static String stackName(ItemStack stack){
