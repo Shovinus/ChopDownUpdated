@@ -12,9 +12,15 @@ import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockFalling;
 import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -22,10 +28,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Tree implements Runnable {
 
@@ -130,18 +138,23 @@ public class Tree implements Runnable {
 			axis = EnumFallAxis.X;
 		}
 	}
+
 	public boolean isLog(BlockPos pos) {
 		return isLog(blockName(pos, world));
 	}
+
 	private boolean isLog(String name) {
 		return config.isLog(name);
 	}
+
 	public boolean isLeaf(BlockPos pos) {
 		return isLeaf(blockName(pos, world));
 	}
+
 	private boolean isLeaf(String name) {
 		return config.isLeaf(name);
 	}
+
 	/*
 	 * Gets a possible tree, but only if it thinks the trunk is completely cut
 	 * through
@@ -509,7 +522,7 @@ public class Tree implements Runnable {
 		return state;
 	}
 
-	public void dropDrops(BlockPos pos, BlockPos dropPos, IBlockState state) {
+	public static void dropDrops(BlockPos pos, BlockPos dropPos, IBlockState state, World world) {
 		// Do drops at location)
 		for (ItemStack stacky : state.getBlock().getDrops(world, pos, state, 0)) {
 			EntityItem entityitem = new EntityItem(world, dropPos.getX(), dropPos.getY(), dropPos.getZ(), stacky);
@@ -547,7 +560,7 @@ public class Tree implements Runnable {
 		// config is set to break leaves then do drops and state finished
 		if ((!CanMoveTo(pair.to) && !pair.moved) || (isLeaves(pair.from) && Config.breakLeaves)) {
 			// Do drops at location
-			dropDrops(pair.from, pair.to, state);
+			dropDrops(pair.from, pair.to, state,world);
 			world.setBlockState(pair.from, Blocks.AIR.getDefaultState());
 			return true;
 		} else if(!CanMoveTo(pair.to)){
@@ -566,7 +579,7 @@ public class Tree implements Runnable {
 				if (Config.useFallingEntities) {
 					//Use falling entities
 					EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
-							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state,pair.tile);
+							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state,pair.tile,!pair.leaves);
 					fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
 					fallingBlock.fallTime = 1;
 					world.spawnEntity(fallingBlock);
@@ -709,7 +722,7 @@ public class Tree implements Runnable {
 	 * Is the block at this position a log
 	 */
 	public static boolean isLeaves(BlockPos pos, World world) {
-		return ArrayUtils.contains(Config.leaves, blockName(pos,world));
+		return ArrayUtils.contains(Config.leaves, blockName(pos,world));		
 	}
 
 	/*
@@ -724,29 +737,155 @@ public class Tree implements Runnable {
 	 */
 	public static class EntityFallingBlock extends net.minecraft.entity.item.EntityFallingBlock {
 
-		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState,
-				TileEntity tile) {
+		EntityFallingBlock(World worldIn, double x, double y, double z, IBlockState fallingBlockState, TileEntity tile,
+				Boolean isLog) {
 			super(worldIn, x, y, z, fallingBlockState);
+			this.isLog = isLog;
+			setHurtEntities(true);
 			if (tile != null) {
 				tileEntityData = tile.writeToNBT(new NBTTagCompound());
 			}
+
 		}
 
+		private boolean isLog = true;
+
+		/**
+		 * Called to update the entity's position/logic.
+		 */
+		@Nullable
+		@Override
+		public void onUpdate() {
+			Block block = this.getBlock().getBlock();
+
+			if (this.getBlock().getMaterial() == Material.AIR) {
+				this.setDead();
+			} else {
+				this.prevPosX = this.posX;
+				this.prevPosY = this.posY;
+				this.prevPosZ = this.posZ;
+
+				if (this.fallTime++ == 0) {
+					BlockPos blockpos = new BlockPos(this);
+
+					if (this.world.getBlockState(blockpos).getBlock() == block) {
+						this.world.setBlockToAir(blockpos);
+					} else if (!this.world.isRemote) {
+						this.setDead();
+						return;
+					}
+				}
+
+				if (!this.hasNoGravity()) {
+					this.motionY -= 0.03999999910593033D;
+				}
+				BlockPos targetBlock = new BlockPos(this.posX, this.posY + this.motionY, this.posZ);
+				if (isLog) {
+					for (int i = 0; i < 100; i++) {
+						
+						if (Tree.isLeaves(targetBlock, world)) {
+							Tree.dropDrops(targetBlock, targetBlock, world.getBlockState(targetBlock), world);
+							world.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
+
+						}
+						targetBlock = targetBlock.add(0, -0.5, 0);
+					}
+				}
+				this.move(MoverType.SELF,this.motionX, this.motionY, this.motionZ);
+				this.motionX *= 0.9800000190734863D;
+				this.motionY *= 0.9800000190734863D;
+				this.motionZ *= 0.9800000190734863D;
+
+				if (!this.world.isRemote) {
+					BlockPos blockpos1 = new BlockPos(this);
+
+					if (this.onGround) {
+						IBlockState iblockstate = this.world.getBlockState(blockpos1);
+						targetBlock = new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ);
+						if ((BlockFalling.canFallThrough(this.world.getBlockState(targetBlock))
+								&& Tree.blockName(targetBlock.add(0, -1, 0), this.world).matches("fence"))) {
+							this.onGround = false;
+							return;
+						}
+						if (!isLog && Tree.isLeaves(targetBlock, world)) {
+							Tree.dropDrops(targetBlock, targetBlock, world.getBlockState(targetBlock), world);
+							world.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
+							this.onGround = false;
+							return;
+
+						}
+						this.motionX *= 0.699999988079071D;
+						this.motionZ *= 0.699999988079071D;
+						this.motionY *= -0.5D;
+
+						if (iblockstate.getBlock() != Blocks.PISTON_EXTENSION) {
+							this.setDead();
+
+							if (true) {
+								if (this.world.mayPlace(block, blockpos1, true, EnumFacing.UP, (Entity) null)
+										&& !BlockFalling.canFallThrough(this.world.getBlockState(blockpos1.down()))
+										&& this.world.setBlockState(blockpos1, this.getBlock(), 3)) {
+									if (block instanceof BlockFalling) {
+										((BlockFalling) block).onEndFalling(this.world, blockpos1,null,null);
+									}
+
+									if (this.tileEntityData != null && block instanceof ITileEntityProvider) {
+										TileEntity tileentity = this.world.getTileEntity(blockpos1);
+
+										if (tileentity != null) {
+											NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
+
+											for (String s : this.tileEntityData.getKeySet()) {
+												NBTBase nbtbase = this.tileEntityData.getTag(s);
+
+												if (!"x".equals(s) && !"y".equals(s) && !"z".equals(s)) {
+													nbttagcompound.setTag(s, nbtbase.copy());
+												}
+											}
+
+											tileentity.readFromNBT(nbttagcompound);
+											tileentity.markDirty();
+										}
+									}
+								} else if (this.shouldDropItem
+										&& this.world.getGameRules().getBoolean("doEntityDrops")) {
+									this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.getBlock())),
+											0.0F);
+								}
+							}
+						}
+					} else if (this.fallTime > 100 && !this.world.isRemote
+							&& (blockpos1.getY() < 1 || blockpos1.getY() > 256) || this.fallTime > 600) {
+						if (this.shouldDropItem && this.world.getGameRules().getBoolean("doEntityDrops")) {
+							this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.getBlock())), 0.0F);
+						}
+
+						this.setDead();
+					}
+				}
+			}
+		}
 
 		@Nullable
 		@Override
 		public EntityItem entityDropItem(ItemStack stack, float offsetY) {
 
 			IBlockState state = getBlock();
-			// TODO check if this works for none MC leaves
-			if (state != null && state.getBlock() instanceof BlockLeaves) {
-				BlockLeaves leaves = (BlockLeaves) state.getBlock();
-				for (ItemStack item : leaves.getDrops(world, getPosition(), state, 0)) {
-					super.entityDropItem(item, offsetY);
-				}
+			BlockPos pos = new BlockPos(this);
+			IBlockState toState = world.getBlockState(pos);
+
+			Boolean isPassable = toState.getBlock().isPassable(world, pos);
+			while (!isPassable && pos.getY() < 256) {
+				pos = pos.add(0, 1, 0);
+				toState = world.getBlockState(pos);
+				isPassable = toState.getBlock().isPassable(world, pos);
+			}
+			if (pos.getY() > 255) {
 				return null;
 			}
-			return super.entityDropItem(stack, offsetY);
+			Tree.dropDrops(pos, pos, toState, world);
+			world.setBlockState(pos, state);
+			return null;
 		}
 	}
 

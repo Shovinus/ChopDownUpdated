@@ -5,7 +5,6 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 class TreeMovePair {
 		public BlockPos to;
@@ -32,7 +31,7 @@ class TreeMovePair {
 		public void move() {
 			IBlockState state2 = tree.world.getBlockState(to);
 			if (!tree.isAir(to)) {
-				tree.dropDrops(from, to, state2);
+				Tree.dropDrops(from, to, state2,tree.world);
 			}
 			tree.world.setBlockState(to, state);
 			if (tile != null) {
