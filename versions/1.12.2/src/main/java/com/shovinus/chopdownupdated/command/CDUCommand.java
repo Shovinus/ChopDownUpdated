@@ -44,12 +44,8 @@ public class CDUCommand extends CommandBase {
 				+ ": Any time you click on a log or leaf it will show the name "
 				+ "as accepted by the trees configuration so if you come across a missing tree "
 				+ "you can add it to your configuration (And hopefully report it please!)\n"
-				+ stateProperty(sender, "lowerLogs")
-				+ ": Logs are lowered to the bottom of leaves to create a more realistic looking fall finish\n"
 				+ stateProperty(sender, "breakLeaves")
-				+ ": Leaves are all broken and do their drops only logs fall\n"
-				+ stateProperty(sender, "useFallingEntities")
-				+ ": Blocks are turned in to falling entites for the fall rather than moved a block at a time (looks nicer but open to part block pop off abuse)";
+				+ ": Leaves are all broken and do their drops only logs fall\n";
 	}
 
 	@Override
@@ -108,15 +104,9 @@ public class CDUCommand extends CommandBase {
 		} else if (action.equals("showBlockName")) {
 			setValue = getValue(value, playerConfig.showBlockName);
 			playerConfig.showBlockName = setValue;
-		} else if (action.equals("lowerLogs")) {
-			setValue = getValue(value,getMainConfigValue("lowerLogs"));
-			setMainConfigValue("lowerLogs",setValue);
 		} else if (action.equals("breakLeaves")) {
 			setValue = getValue(value,getMainConfigValue("breakLeaves"));
 			setMainConfigValue("breakLeaves",setValue);
-		} else if (action.equals("useFallingEntities")) {
-			setValue = getValue(value,getMainConfigValue("useFallingEntities"));
-			setMainConfigValue("useFallingEntities",setValue);
 		} else {
 			return;
 		}
@@ -127,16 +117,18 @@ public class CDUCommand extends CommandBase {
 	public boolean getMainConfigValue(String config){
 		return Config.config.getCategory(Config.CATEGORY).get(config).getBoolean();
 	}
-	public void setMainConfigValue(String config,boolean value){
+	public void setMainConfigValue(String config,boolean value) {
 		Config.config.getCategory(Config.CATEGORY).get(config).set(value);
+		try {
 		Config.reloadConfig();
+		}catch(Exception ex){}
 	}
 	@Override
 	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args,
 			BlockPos pos) {
 		if (args.length == 1) {
 			return getListOfStringsMatchingLastWord(args, 
-					 "makeGlass","dontDrop", "showBlockName","lowerLogs","breakLeaves","useFallingEntities");
+					 "makeGlass","dontDrop", "showBlockName","breakLeaves");
 
 		}
 		if (args.length == 2) {
@@ -158,16 +150,10 @@ public class CDUCommand extends CommandBase {
 		}
 		if (property.equals("showBlockName")) {
 			return (getPlayerConfig(sender).showBlockName ? "[x] " : "[ ] ") + "showBlockName";
-		}
-		if (property.equals("lowerLogs")) {
-			return (getMainConfigValue("lowerLogs") ? "[x] " : "[ ] ") + "lowerLogs";
-		}
+		}		
 		if (property.equals("breakLeaves")) {
 			return (getMainConfigValue("breakLeaves") ? "[x] " : "[ ] ") + "breakLeaves";
-		}
-		if (property.equals("useFallingEntities")) {
-			return (getMainConfigValue("useFallingEntities") ? "[x] " : "[ ] ") + "useFallingEntities";
-		}
+		}		
 		return "";
 	}
 }

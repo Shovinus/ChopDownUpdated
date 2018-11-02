@@ -20,7 +20,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.MoverType;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -173,7 +172,6 @@ public class Tree implements Runnable {
 							BlockPos inspectPos = blockStep.add(dx, dy, dz);
 							String blockName = blockName(inspectPos, world);
 
-
 							boolean log = isLog(blockName);
 							boolean leaf = false;
 							if (!log) {
@@ -265,9 +263,6 @@ public class Tree implements Runnable {
 	public void getDropBlocks() throws Exception {
 		getPossibleTree();
 		getRealisticTree();
-		if (Config.lowerLogs) {
-			lowerLogs();
-		}
 		this.finishedCalculation = true;
 	}
 
@@ -431,33 +426,6 @@ public class Tree implements Runnable {
 	}
 
 	/*
-	 * Swaps logs with leaves below, creates a better looking tree fall, also
-	 * removes some leaves so it looks more like a fallen tree would
-	 */
-	private void lowerLogs() {
-		for (BlockPos pos : fallingBlocksList) {
-			TreeMovePair pair = fallingBlocks.get(pos);
-			if (!pair.leaves) {
-				Boolean movedBlock = true;
-				while (movedBlock) {
-					movedBlock = false;
-					TreeMovePair lowerPair = getLowerTargetBlock(pair.to);
-					if (lowerPair != null && lowerPair.leaves && pair.to.getY() > base.getY()
-							&& ((isAir(lowerPair.to) || isPassable(lowerPair.to))
-									|| !(isAir(pair.to) || isPassable(pair.to)))) {
-						BlockPos upperBlock = pair.to;
-						pair.to = lowerPair.to;
-						lowerPair.to = upperBlock;
-						fallingBlocks.put(pair.to, pair);
-						fallingBlocks.put(lowerPair.to, lowerPair);
-						movedBlock = true;
-					}
-				}
-			}
-		}
-	}
-
-	/*
 	 * Is the block more likely to be yours or mine?
 	 */
 	public Boolean myBlock(BlockPos pos, double yourDistance, int yourStepValue) {
@@ -557,12 +525,12 @@ public class Tree implements Runnable {
 		}
 		// If the target block is not passable or the source block is leaves and the
 		// config is set to break leaves then do drops and state finished
-		if ((!CanMoveTo(pair.to) && !pair.moved) || (isLeaves(pair.from) && Config.breakLeaves)) {
+		if ((!CanMoveTo(pair.to,!pair.leaves) && !pair.moved) || (isLeaves(pair.from) && Config.breakLeaves)) {
 			// Do drops at location
-			dropDrops(pair.from, pair.to, state,world);
+			dropDrops(pair.from, pair.to, state, world);
 			world.setBlockState(pair.from, Blocks.AIR.getDefaultState());
 			return true;
-		} else if (!CanMoveTo(pair.to)) {
+		} else if (!CanMoveTo(pair.to,!pair.leaves)) {
 			return true;
 		}
 		// Can move to this block, set the source block to air, set the from block as to
@@ -575,7 +543,6 @@ public class Tree implements Runnable {
 			pair.move();
 		} else {
 			if (!UseSolid) {
-				if (Config.useFallingEntities) {
 					// Use falling entities
 					EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
 							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state, pair.tile, !pair.leaves);
@@ -583,11 +550,6 @@ public class Tree implements Runnable {
 					fallingBlock.fallTime = 1;
 					world.spawnEntityInWorld(fallingBlock);
 				} else {
-					pair.move();
-					pair.to = pair.to.add(0, -1, 0);
-					return false;
-				}
-			} else {
 				ManuallyDrop(pair, state);
 			}
 		}
@@ -596,14 +558,19 @@ public class Tree implements Runnable {
 
 	private void ManuallyDrop(TreeMovePair pair, IBlockState state) {
 		// Move large trees to final resting place
-		while (CanMoveTo(pair.to.add(0, -1, 0))) {
+		while (CanMoveTo(pair.to.add(0, -1, 0),!pair.leaves)) {
 			pair.to = pair.to.add(0, -1, 0);
+			if(!isAir(pair.to)) {
+				IBlockState state2 = world.getBlockState(pair.to);
+				Tree.dropDrops(pair.from, pair.to, world.getBlockState(pair.to),world);
+				world.setBlockState(pair.to,Blocks.AIR.getDefaultState() );
+		}
 		}
 		pair.move();
 	}
 
-	private boolean CanMoveTo(BlockPos pos) {
-		return (isAir(pos) || isPassable(pos)) && pos.getY() > 0;
+	private boolean CanMoveTo(BlockPos pos, Boolean log) {
+		return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > 0;
 	}
 
 	/*

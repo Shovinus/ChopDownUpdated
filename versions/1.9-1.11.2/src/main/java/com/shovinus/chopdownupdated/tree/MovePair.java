@@ -5,7 +5,6 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 class TreeMovePair {
 	public BlockPos to;
@@ -27,7 +26,6 @@ class TreeMovePair {
 			state = tree.rotateLog(tree.world, state);
 		}
 
-	}
 
 		}
 	public void move() {

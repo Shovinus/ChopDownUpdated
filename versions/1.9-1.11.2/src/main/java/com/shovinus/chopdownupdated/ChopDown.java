@@ -37,7 +37,7 @@ public class ChopDown {
 	
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "1.2.0";
+	public static final String VERSION = "1.2.2";
 	public static final String AUTHOR = "Shovinus";/*
 													 * Original Idea by Ternsip,however the mod does not really resemble
 													 * that in any way other that the turning of blocks in to falling
@@ -49,17 +49,20 @@ public class ChopDown {
 	public void init(FMLInitializationEvent event) {
 		MinecraftForge.EVENT_BUS.register(this);
 	}
+
 	@EventHandler
 
-	public void preinit(FMLPreInitializationEvent event) {
+	public void preinit(FMLPreInitializationEvent event) throws Exception {
 		Config.load(event);
 	}
+
 	@EventHandler
 	public void serverLoad(FMLServerStartingEvent event) {
 		// register server commands
 		event.registerServerCommand(new CDUCommand());
 		executor = Executors.newFixedThreadPool(2);
 	}
+
 	@SubscribeEvent
 	public void onBlockBreak(BlockEvent.BreakEvent event) {
 
