@@ -1,9 +1,22 @@
-*desktop.ini
-*.idea/*
-versions/1.12.2/src/main/java/.idea/.name
-versions/1.12.2/src/main/java/.idea/java.iml
-versions/1.12.2/src/main/java/.idea/modules.xml
-*.xml
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
 *.iml
-versions/1.12.2/.idea/.name
-versions/1.9-1.11.2/src/.idea/.name
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
