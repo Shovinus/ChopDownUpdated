@@ -28,13 +28,13 @@ import com.shovinus.chopdownupdated.tree.Tree;
 @Mod(
 		modid = ChopDown.MODID,
 		name = ChopDown.MODNAME,
-		version = ChopDown.VERSION, 
+		version = ChopDown.VERSION,
 		acceptedMinecraftVersions = "[1.9,1.11.2]",
-		acceptableRemoteVersions = "*", 
+		acceptableRemoteVersions = "*",
 guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
 public class ChopDown {
 	ExecutorService executor;
-	
+
 	public static final String MODID = "chopdownupdated";
 	public static final String MODNAME = "ChopDownUpdated";
 	public static final String VERSION = "@VERSION@";
@@ -69,19 +69,22 @@ public class ChopDown {
 		World world = event.getWorld();
 		BlockPos pos = event.getPos();	
 
-		if(!Tree.isWood(pos, world) || !ArrayUtils.contains(Config.allowedPlayers,event.getPlayer().getClass().getName())) {
+		if (!Tree.isWood(pos, world)
+				|| !ArrayUtils.contains(Config.allowedPlayers, event.getPlayer().getClass().getName())) {
 			return;
 		}
-		if(event.getPlayer().getHeldItemMainhand() != null && Config.MatchesTool(Tree.stackName(event.getPlayer().getHeldItemMainhand()))) {
+		if (event.getPlayer().getHeldItemMainhand() != null
+				&& Config.MatchesTool(Tree.stackName(event.getPlayer().getHeldItemMainhand()))) {
 			return;
 		}
-		TreeConfiguration config = Tree.findConfig(world,pos);
+		TreeConfiguration config = Tree.findConfig(world, pos);
 		BlockPos playerStanding = event.getPlayer().getPosition();
-		if (config == null || !Tree.isTrunk(pos, world,config) || !Tree.isWood(pos.add(0, 1, 0), world)|| (playerStanding.getX() == 0 && playerStanding.getZ()==0)) {
+		if (config == null || !Tree.isTrunk(pos, world, config) || !Tree.isWood(pos.add(0, 1, 0), world)
+				|| (playerStanding.getX() == 0 && playerStanding.getZ() == 0)) {
 			return;
-		}		
+		}
 
-		//Check to see if this player has already started a tree chop event.
+		// Check to see if this player has already started a tree chop event.
 		for (Tree tree : FallingTrees) {
 			if (tree.player == event.getPlayer()) {
 				event.getPlayer().addChatComponentMessage(new TextComponentString("Still chopping down the last tree"));
@@ -98,9 +101,11 @@ public class ChopDown {
 		} catch (Exception e) {
 			event.getPlayer().addChatComponentMessage(new TextComponentString("Can't find a tree configuration for this log."));
 		}
-		
+
 	}
+
 	static int tick = 0;
+
 	@SubscribeEvent
 	public void onTick(TickEvent.ServerTickEvent event) {
 		try {
@@ -122,6 +127,7 @@ public class ChopDown {
 			System.out.println("Error while continuing to chop trees");
 		}
 	}
+
 	@SubscribeEvent
 	public void clickBlock(PlayerInteractEvent.LeftClickBlock event) {
 		if (!(event.getEntityPlayer() instanceof EntityPlayerMP)) {
@@ -131,10 +137,12 @@ public class ChopDown {
 			World world = event.getWorld();
 			BlockPos pos = event.getPos();
 			event.getEntityPlayer().addChatComponentMessage(new TextComponentString("Block:" + Tree.blockName(pos, world)));
-			if(event.getEntityPlayer().getHeldItemMainhand() != null) {
-				event.getEntityPlayer().addChatComponentMessage(new TextComponentString("Tool:" + Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
+			if (event.getEntityPlayer().getHeldItemMainhand() != null) {
+				event.getEntityPlayer().addChatComponentMessage(new TextComponentString(
+						"Tool:" + Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
 			}
-			event.getEntityPlayer().addChatComponentMessage(new TextComponentString("Player Class:" + event.getEntityPlayer().getClass().getName()));
+			event.getEntityPlayer().addChatComponentMessage(
+					new TextComponentString("Player Class:" + event.getEntityPlayer().getClass().getName()));
 		}
 	}
 }

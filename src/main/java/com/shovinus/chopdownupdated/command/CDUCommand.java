@@ -117,7 +117,7 @@ public class CDUCommand extends CommandBase {
 	public boolean getMainConfigValue(String config){
 		return Config.config.getCategory(Config.CATEGORY).get(config).getBoolean();
 	}
-	public void setMainConfigValue(String config,boolean value){
+	public void setMainConfigValue(String config,boolean value) {
 		Config.config.getCategory(Config.CATEGORY).get(config).set(value);
 		try {
 		Config.reloadConfig();

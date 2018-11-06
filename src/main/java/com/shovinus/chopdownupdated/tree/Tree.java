@@ -543,13 +543,13 @@ public class Tree implements Runnable {
 			pair.move();
 		} else {
 			if (!UseSolid) {
-					// Use falling entities
-					EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
-							pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state, pair.tile, !pair.leaves);
-					fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
-					fallingBlock.fallTime = 1;
-					world.spawnEntityInWorld(fallingBlock);
-				} else {
+				// Use falling entities
+				EntityFallingBlock fallingBlock = new EntityFallingBlock(world, pair.to.getX() + 0.5,
+						pair.to.getY() + 0.5, pair.to.getZ() + 0.5, state, pair.tile, !pair.leaves);
+				fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
+				fallingBlock.fallTime = 1;
+				world.spawnEntityInWorld(fallingBlock);
+			} else {
 				ManuallyDrop(pair, state);
 			}
 		}
@@ -564,13 +564,13 @@ public class Tree implements Runnable {
 				IBlockState state2 = world.getBlockState(pair.to);
 				Tree.dropDrops(pair.from, pair.to, world.getBlockState(pair.to),world);
 				world.setBlockState(pair.to,Blocks.AIR.getDefaultState() );
-		}
+			}
 		}
 		pair.move();
 	}
 
 	private boolean CanMoveTo(BlockPos pos, Boolean log) {
-		return (isAir(pos) || isPassable(pos) || (log && isLeaf(pos))) && pos.getY() > 0;
+		return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > 0;
 	}
 
 	/*
@@ -688,7 +688,13 @@ public class Tree implements Runnable {
 	 * Is the block at this position a log
 	 */
 	public static boolean isLeaves(BlockPos pos, World world) {
-		return ArrayUtils.contains(Config.leaves, blockName(pos, world));
+		String blockName = blockName(pos, world);
+		for (String block : Config.leaves) {
+			if (block.equals(blockName) || blockName.matches(block)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/*
@@ -749,7 +755,7 @@ public class Tree implements Runnable {
 				BlockPos targetBlock = new BlockPos(this.posX, this.posY + this.motionY, this.posZ);
 				if (isLog) {
 					for (int i = 0; i < 100; i++) {
-						
+
 						if (Tree.isLeaves(targetBlock, world)) {
 							Tree.dropDrops(targetBlock, targetBlock, world.getBlockState(targetBlock), world);
 							world.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
