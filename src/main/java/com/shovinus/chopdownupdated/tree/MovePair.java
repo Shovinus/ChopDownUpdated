@@ -25,7 +25,7 @@ class TreeMovePair {
 			if (tree.isLog(from)) {
 				state = tree.rotateLog(tree.world, state);
 			}
-			
+
 
 		}
 		public void move() {

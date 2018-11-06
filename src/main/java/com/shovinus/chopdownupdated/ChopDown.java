@@ -25,7 +25,13 @@ import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.tree.Tree;
 
-@Mod(modid = ChopDown.MODID, name = ChopDown.MODNAME, version = ChopDown.VERSION, acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
+@Mod(
+		modid = ChopDown.MODID,
+		name = ChopDown.MODNAME,
+		version = ChopDown.VERSION,
+		acceptedMinecraftVersions = "[1.12.2]",
+		acceptableRemoteVersions = "*",
+guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
 public class ChopDown {
 	ExecutorService executor;
 
@@ -86,8 +92,7 @@ public class ChopDown {
 				return;
 			}
 		}
-		// Initialise the tree and add it to the list, get the executor to start
-		// chopping it down;;
+		//Initialise the tree and add it to the list, get the executor to start chopping it down;;
 		Tree tree;
 		try {
 			tree = new Tree(pos, world, event.getPlayer());

@@ -154,7 +154,7 @@ public class Tree implements Runnable {
 	private boolean isLeaf(String name) {
 		return config.isLeaf(name);
 	}
-	
+
 	/*
 	 * Gets a possible tree, but only if it thinks the trunk is completely cut
 	 * through
@@ -550,7 +550,6 @@ public class Tree implements Runnable {
 				fallingBlock.setEntityBoundingBox(new AxisAlignedBB(pair.to.add(0, 0, 0), pair.to.add(1, 1, 1)));
 				fallingBlock.fallTime = 1;
 				world.spawnEntity(fallingBlock);
-
 			} else {
 				ManuallyDrop(pair, state);
 			}
@@ -562,9 +561,9 @@ public class Tree implements Runnable {
 		// Move large trees to final resting place
 		while (CanMoveTo(pair.to.add(0, -1, 0),!pair.leaves)) {
 			pair.to = pair.to.add(0, -1, 0);
-			if(!isAir(pair.to)) {			
+			if(!isAir(pair.to)) {
 				IBlockState state2 = world.getBlockState(pair.to);
-				Tree.dropDrops(pair.from, pair.to, world.getBlockState(pair.to),world);				
+				Tree.dropDrops(pair.from, pair.to, world.getBlockState(pair.to),world);
 				world.setBlockState(pair.to,Blocks.AIR.getDefaultState() );
 			}
 		}

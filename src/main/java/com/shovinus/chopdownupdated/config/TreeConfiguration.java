@@ -88,7 +88,7 @@ public class TreeConfiguration {
 	public List<String> Logs() {
 		return logs;
 	}
-	
+
 	//Gets all leaves after merging the shared leaves (beehives etc)
 	public String[] Leaves() {
 		if (leaves_merged == null) {

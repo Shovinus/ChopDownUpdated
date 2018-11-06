@@ -150,10 +150,10 @@ public class CDUCommand extends CommandBase {
 		}
 		if (property.equals("showBlockName")) {
 			return (getPlayerConfig(sender).showBlockName ? "[x] " : "[ ] ") + "showBlockName";
-		}		
+		}
 		if (property.equals("breakLeaves")) {
 			return (getMainConfigValue("breakLeaves") ? "[x] " : "[ ] ") + "breakLeaves";
-		}		
+		}
 		return "";
 	}
 }

@@ -58,7 +58,7 @@ public class Config {
 		config = new Configuration(event.getSuggestedConfigurationFile(), ChopDown.VERSION);
 		if (!config.getDefinedConfigVersion().equals(config.getLoadedConfigVersion())) {
 			event.getSuggestedConfigurationFile().renameTo(new File(event.getSuggestedConfigurationFile().getPath() + "_old"));
-			
+
 			config = new Configuration(event.getSuggestedConfigurationFile(), ChopDown.VERSION);
 		}
 		reloadConfig();
@@ -83,7 +83,7 @@ public class Config {
 
 		ignoreTools = config.getStringList("ignoreTools", CATEGORY, new String[] { "tconstruct:lumberaxe:.*" },
 				"List of tools to ignore chop down on, such as tinkers lumberaxe, any tool that veinmines or similar should be ignored for chopdown");
-		
+
 		//Predefined tree configs for mods
 		List<String> activeMods = new ArrayList<String>();
 		if (config.getBoolean("Vanilla", MOD_CATEGORY, true, "Vanilla"))
@@ -95,7 +95,7 @@ public class Config {
 			if (config.getBoolean(mod, MOD_CATEGORY, false, mod))
 				activeMods.add(mod);
 		}
-		
+
 		//Custom configs
 		String[] tempTreeConfig = config.getStringList("customTrees", CATEGORY,
 				new String[] {},
@@ -106,7 +106,7 @@ public class Config {
 		}
 		TreeConfiguration[] tempCustomTrees = tempTreeConfigurations.toArray(new TreeConfiguration[tempTreeConfigurations.size()]);
 		mods.setCustomTrees(tempCustomTrees);
-		
+
 		//Merge trees
 		mods.ActivateMods(ConvertListToArray(activeMods));
 		treeConfigurations = mods.UnifiedTreeConfigs.toArray(new TreeConfiguration[mods.UnifiedTreeConfigs.size()]);
@@ -152,5 +152,6 @@ public class Config {
 
 	public static String[] ConvertListToArray(List<String> list) {
 		return list.toArray(new String[list.size()]);
-	}	
+	}
+
 }
