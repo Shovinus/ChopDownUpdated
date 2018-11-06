@@ -55,7 +55,7 @@ public class TreeConfiguration {
 	public TreeConfiguration(int radius, int leaf_limit, int min_logs, int trunk_radius) {
 		this.radius = radius;
 		this.leaf_limit = leaf_limit;
-		this.trunk_radius = trunk_radius;
+		this.trunk_radius = trunk_radius;		
 		this.min_vertical_logs = min_logs;
 	}
 	public TreeConfiguration setLogs(String... logs) {

@@ -504,7 +504,7 @@ public class Tree implements Runnable {
 	 * configs.
 	 */
 	private boolean drop(TreeMovePair pair, Boolean UseSolid) {
-		if (!(isLog(pair.from) || isLeaves(pair.from))) {
+		if (!(isLog(pair.from) || isLeaf(pair.from))) {
 			return true;
 		}
 		PersonalConfig playerConfig = Config.getPlayerConfig(player.getUniqueID());
@@ -525,7 +525,7 @@ public class Tree implements Runnable {
 		}
 		// If the target block is not passable or the source block is leaves and the
 		// config is set to break leaves then do drops and state finished
-		if ((!CanMoveTo(pair.to,!pair.leaves) && !pair.moved) || (isLeaves(pair.from) && Config.breakLeaves)) {
+		if ((!CanMoveTo(pair.to,!pair.leaves) && !pair.moved) || (isLeaf(pair.from) && Config.breakLeaves)) {
 			// Do drops at location
 			dropDrops(pair.from, pair.to, state, world);
 			world.setBlockState(pair.from, Blocks.AIR.getDefaultState());
@@ -570,7 +570,7 @@ public class Tree implements Runnable {
 	}
 
 	private boolean CanMoveTo(BlockPos pos, Boolean log) {
-		return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > 0;
+		return (isAir(pos) || isPassable(pos) || (log && isLeaf(pos))) && pos.getY() > 0;
 	}
 
 	/*
@@ -715,13 +715,14 @@ public class Tree implements Runnable {
 		}
 
 		private boolean isLog = true;
-
+        private World world;
 		/**
 		 * Called to update the entity's position/logic.
 		 */
 		@Nullable
 		@Override
 		public void onUpdate() {
+			this.world = this.worldObj;
 			Block block = this.getBlock().getBlock();
 
 			if (this.getBlock().getMaterial() == Material.AIR) {
@@ -734,9 +735,9 @@ public class Tree implements Runnable {
 				if (this.fallTime++ == 0) {
 					BlockPos blockpos = new BlockPos(this);
 
-					if (this.worldObj.getBlockState(blockpos).getBlock() == block) {
-						this.worldObj.setBlockToAir(blockpos);
-					} else if (!this.worldObj.isRemote) {
+					if (this.world.getBlockState(blockpos).getBlock() == block) {
+						this.world.setBlockToAir(blockpos);
+					} else if (!this.world.isRemote) {
 						this.setDead();
 						return;
 					}
@@ -749,34 +750,33 @@ public class Tree implements Runnable {
 				if (isLog) {
 					for (int i = 0; i < 100; i++) {
 						
-						if (Tree.isLeaves(targetBlock, worldObj)) {
-							Tree.dropDrops(targetBlock, targetBlock, worldObj.getBlockState(targetBlock), worldObj);
-							worldObj.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
+						if (Tree.isLeaves(targetBlock, world)) {
+							Tree.dropDrops(targetBlock, targetBlock, world.getBlockState(targetBlock), world);
+							world.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
 
 						}
 						targetBlock = targetBlock.add(0, -0.5, 0);
 					}
 				}
-
 				this.moveEntity(this.motionX, this.motionY, this.motionZ);
 				this.motionX *= 0.9800000190734863D;
 				this.motionY *= 0.9800000190734863D;
 				this.motionZ *= 0.9800000190734863D;
 
-				if (!this.worldObj.isRemote) {
+				if (!this.world.isRemote) {
 					BlockPos blockpos1 = new BlockPos(this);
 
 					if (this.onGround) {
-						IBlockState iblockstate = this.worldObj.getBlockState(blockpos1);
+						IBlockState iblockstate = this.world.getBlockState(blockpos1);
 						targetBlock = new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ);
-						if ((BlockFalling.canFallThrough(this.worldObj.getBlockState(targetBlock))
-								&& Tree.blockName(targetBlock.add(0, -1, 0), this.worldObj).matches("fence"))) {
+						if ((BlockFalling.canFallThrough(this.world.getBlockState(targetBlock))
+								&& Tree.blockName(targetBlock.add(0, -1, 0), this.world).matches("fence"))) {
 							this.onGround = false;
 							return;
 						}
-						if (!isLog && Tree.isLeaves(targetBlock, worldObj)) {
-							Tree.dropDrops(targetBlock, targetBlock, worldObj.getBlockState(targetBlock), worldObj);
-							worldObj.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
+						if (!isLog && Tree.isLeaves(targetBlock, world)) {
+							Tree.dropDrops(targetBlock, targetBlock, world.getBlockState(targetBlock), world);
+							world.setBlockState(targetBlock, Blocks.AIR.getDefaultState());
 							this.onGround = false;
 							return;
 
@@ -789,16 +789,16 @@ public class Tree implements Runnable {
 							this.setDead();
 
 							if (true) {
-								if (this.worldObj.canBlockBePlaced(block, blockpos1, true, EnumFacing.UP, (Entity) null,
+								if (this.world.canBlockBePlaced(block, blockpos1, true, EnumFacing.UP, (Entity) null,
 										(ItemStack) null)
-										&& !BlockFalling.canFallThrough(this.worldObj.getBlockState(blockpos1.down()))
-										&& this.worldObj.setBlockState(blockpos1, this.getBlock(), 3)) {
+										&& !BlockFalling.canFallThrough(this.world.getBlockState(blockpos1.down()))
+										&& this.world.setBlockState(blockpos1, this.getBlock(), 3)) {
 									if (block instanceof BlockFalling) {
-										((BlockFalling) block).onEndFalling(this.worldObj, blockpos1);
+										((BlockFalling) block).onEndFalling(this.world, blockpos1);
 									}
 
 									if (this.tileEntityData != null && block instanceof ITileEntityProvider) {
-										TileEntity tileentity = this.worldObj.getTileEntity(blockpos1);
+										TileEntity tileentity = this.world.getTileEntity(blockpos1);
 
 										if (tileentity != null) {
 											NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
@@ -816,15 +816,15 @@ public class Tree implements Runnable {
 										}
 									}
 								} else if (this.shouldDropItem
-										&& this.worldObj.getGameRules().getBoolean("doEntityDrops")) {
+										&& this.world.getGameRules().getBoolean("doEntityDrops")) {
 									this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.getBlock())),
 											0.0F);
 								}
 							}
 						}
-					} else if (this.fallTime > 100 && !this.worldObj.isRemote
+					} else if (this.fallTime > 100 && !this.world.isRemote
 							&& (blockpos1.getY() < 1 || blockpos1.getY() > 256) || this.fallTime > 600) {
-						if (this.shouldDropItem && this.worldObj.getGameRules().getBoolean("doEntityDrops")) {
+						if (this.shouldDropItem && this.world.getGameRules().getBoolean("doEntityDrops")) {
 							this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.getBlock())), 0.0F);
 						}
 
@@ -837,22 +837,22 @@ public class Tree implements Runnable {
 		@Nullable
 		@Override
 		public EntityItem entityDropItem(ItemStack stack, float offsetY) {
-
+			this.world = this.worldObj;
 			IBlockState state = getBlock();
 			BlockPos pos = new BlockPos(this);
-			IBlockState toState = worldObj.getBlockState(pos);
+			IBlockState toState = world.getBlockState(pos);
 
-			Boolean isPassable = toState.getBlock().isPassable(worldObj, pos);
+			Boolean isPassable = toState.getBlock().isPassable(world, pos);
 			while (!isPassable && pos.getY() < 256) {
 				pos = pos.add(0, 1, 0);
-				toState = worldObj.getBlockState(pos);
-				isPassable = toState.getBlock().isPassable(worldObj, pos);
+				toState = world.getBlockState(pos);
+				isPassable = toState.getBlock().isPassable(world, pos);
 			}
 			if (pos.getY() > 255) {
 				return null;
 			}
-			Tree.dropDrops(pos, pos, toState, worldObj);
-			worldObj.setBlockState(pos, state);
+			Tree.dropDrops(pos, pos, toState, world);
+			world.setBlockState(pos, state);
 			return null;
 		}
 	}

@@ -84,6 +84,7 @@ public class Config {
 		ignoreTools = config.getStringList("ignoreTools", CATEGORY, new String[] { "tconstruct:lumberaxe:.*" },
 				"List of tools to ignore chop down on, such as tinkers lumberaxe, any tool that veinmines or similar should be ignored for chopdown");
 
+		//Predefined tree configs for mods
 		List<String> activeMods = new ArrayList<String>();
 		if (config.getBoolean("Vanilla", MOD_CATEGORY, true, "Vanilla"))
 			activeMods.add("Vanilla");
@@ -94,6 +95,19 @@ public class Config {
 			if (config.getBoolean(mod, MOD_CATEGORY, false, mod))
 				activeMods.add(mod);
 		}
+
+		//Custom configs
+		String[] tempTreeConfig = config.getStringList("customTrees", CATEGORY,
+				new String[] {},
+				"Allows you to add your own custom trees, use the following google sheet to design your own trees more easily (Make a copy): http://bit.ly/treeconfig");
+		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();
+		for (String treeConfig : tempTreeConfig) {
+			tempTreeConfigurations.add(new Gson().fromJson(treeConfig, TreeConfiguration.class));
+		}
+		TreeConfiguration[] tempCustomTrees = tempTreeConfigurations.toArray(new TreeConfiguration[tempTreeConfigurations.size()]);
+		mods.setCustomTrees(tempCustomTrees);
+
+		//Merge trees
 		mods.ActivateMods(ConvertListToArray(activeMods));
 		treeConfigurations = mods.UnifiedTreeConfigs.toArray(new TreeConfiguration[mods.UnifiedTreeConfigs.size()]);
 		GenerateLeavesAndLogs();

@@ -25,6 +25,9 @@ public class ModTreeConfigurations {
 						+ " , this should not happen in live, sorry for any inconvience, please report to mod releaser");
 			}
 		}
+		if(Mods.containsKey("_Custom")) {
+			MergeInTrees(Mods.get("_Custom"));
+		}
 		return UnifiedTreeConfigs;
 	}
 
@@ -66,5 +69,8 @@ public class ModTreeConfigurations {
 		Mods.put("Thaumcraft", Thaumcraft.Trees);
 		Mods.put("Traverse", Traverse.Trees);
 		Mods.put("Tropicraft", Tropicraft.Trees);
+	}
+	public void setCustomTrees(TreeConfiguration[] trees) {
+		Mods.put("_Custom", trees);
 	}
 }

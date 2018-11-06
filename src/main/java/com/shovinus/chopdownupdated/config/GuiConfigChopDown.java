@@ -13,7 +13,7 @@ public class GuiConfigChopDown extends GuiConfig {
 
 		super(parentScreen,
 				getElements(), ChopDown.MODID, false, false, "Configure Chop Down Updated");
-		
+
 	}
 
 	public static List<IConfigElement> getElements() {
