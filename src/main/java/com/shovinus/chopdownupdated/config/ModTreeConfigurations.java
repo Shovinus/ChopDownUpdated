@@ -67,6 +67,7 @@ public class ModTreeConfigurations {
 		Mods.put("Terra", Terra.Trees);
 		Mods.put("Terraqueous", Terraqueous.Trees);
 		Mods.put("Thaumcraft", Thaumcraft.Trees);
+		Mods.put("TheBetweenLands", TheBetweenLands.Trees);
 		Mods.put("Traverse", Traverse.Trees);
 		Mods.put("Tropicraft", Tropicraft.Trees);
 	}

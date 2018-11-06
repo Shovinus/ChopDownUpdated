@@ -90,7 +90,7 @@ public class Config {
 			activeMods.add("Vanilla");
 		String[] availableMods = { "BiomesOPlenty", "DefiledLands", "ExtraTrees", "Forestry", "IndustrialCraft2",
 				"IntegratedDynamics", "Natura", "PamsHarvestCraft", "Plants", "Rustic", "Terra", "Terraqueous",
-				"Thaumcraft", "Traverse", "Tropicraft" };
+				"Thaumcraft", "TheBetweenLands", "Traverse", "Tropicraft" };
 		for (String mod : availableMods) {
 			if (config.getBoolean(mod, MOD_CATEGORY, false, mod))
 				activeMods.add(mod);
@@ -152,6 +152,5 @@ public class Config {
 
 	public static String[] ConvertListToArray(List<String> list) {
 		return list.toArray(new String[list.size()]);
-	}
-
+	}	
 }

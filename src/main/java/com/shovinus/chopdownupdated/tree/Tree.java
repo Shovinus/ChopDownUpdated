@@ -154,7 +154,7 @@ public class Tree implements Runnable {
 	private boolean isLeaf(String name) {
 		return config.isLeaf(name);
 	}
-
+	
 	/*
 	 * Gets a possible tree, but only if it thinks the trunk is completely cut
 	 * through
@@ -505,7 +505,7 @@ public class Tree implements Runnable {
 	 * configs.
 	 */
 	private boolean drop(TreeMovePair pair, Boolean UseSolid) {
-		if (!(isLog(pair.from) || isLeaves(pair.from))) {
+		if (!(isLog(pair.from) || isLeaf(pair.from))) {
 			return true;
 		}
 		PersonalConfig playerConfig = Config.getPlayerConfig(player.getUniqueID());
@@ -526,7 +526,7 @@ public class Tree implements Runnable {
 		}
 		// If the target block is not passable or the source block is leaves and the
 		// config is set to break leaves then do drops and state finished
-		if ((!CanMoveTo(pair.to,!pair.leaves) && !pair.moved) || (isLeaves(pair.from) && Config.breakLeaves)) {
+		if ((!CanMoveTo(pair.to,!pair.leaves) && !pair.moved) || (isLeaf(pair.from) && Config.breakLeaves)) {
 			// Do drops at location
 			dropDrops(pair.from, pair.to, state, world);
 			world.setBlockState(pair.from, Blocks.AIR.getDefaultState());
@@ -690,7 +690,13 @@ public class Tree implements Runnable {
 	 * Is the block at this position a log
 	 */
 	public static boolean isLeaves(BlockPos pos, World world) {
-		return ArrayUtils.contains(Config.leaves, blockName(pos, world));
+		String blockName = blockName(pos, world);
+		for (String block : Config.leaves) {
+			if (block.equals(blockName) || blockName.matches(block)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/*
