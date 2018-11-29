@@ -88,16 +88,16 @@ public class Config {
 		List<String> activeMods = new ArrayList<String>();
 		if (config.getBoolean("Vanilla", MOD_CATEGORY, true, "Vanilla"))
 			activeMods.add("Vanilla");
-		String[] availableMods = { "BiomesOPlenty", "DefiledLands", "ExtraTrees", "Forestry", "IndustrialCraft2",
-				"IntegratedDynamics", "Natura", "PamsHarvestCraft", "Plants", "Rustic", "Terra", "Terraqueous",
-				"Thaumcraft", "TheBetweenLands", "Traverse", "Tropicraft" };
+		String[] availableMods = { "AetherLegacy","BiomesOPlenty", "DefiledLands", "ExtraTrees", "Forestry", "IndustrialCraft2",
+				"IntegratedDynamics", "Natura", "PamsHarvestCraft", "Plants", "Rustic", "SugiForest", "Terra", "Terraqueous",
+				"Thaumcraft", "TheBetweenLands", "TheTwighlightForest", "Traverse","Treasure2", "Tropicraft" };
 		for (String mod : availableMods) {
 			if (config.getBoolean(mod, MOD_CATEGORY, false, mod))
 				activeMods.add(mod);
 		}
 
 		//Custom configs
-		String[] tempTreeConfig = config.getStringList("customTrees", CATEGORY,
+		String[] tempTreeConfig = config.getStringList("customTrees", MOD_CATEGORY,
 				new String[] {},
 				"Allows you to add your own custom trees, use the following google sheet to design your own trees more easily (Make a copy): http://bit.ly/treeconfig");
 		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();
