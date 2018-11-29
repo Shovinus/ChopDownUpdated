@@ -5,11 +5,9 @@ import com.shovinus.chopdownupdated.config.TreeConfiguration;
 public class Natura {
 	public static TreeConfiguration[] Trees = new TreeConfiguration[] {
 			new TreeConfiguration().setLogs("natura:nether_logs:0").setLeaves("natura:nether_leaves:0"),
-			new TreeConfiguration().setLogs("natura:nether_logs:1").setLeaves("natura:nether_leaves2:0",
-					"natura:nether_leaves2:1", "natura:nether_leaves2:2", "natura:nether_leaves2:10"),
+			new TreeConfiguration().setLogs("natura:nether_logs:1").setLeaves("natura:nether_leaves2:0","natura:nether_leaves2:1", "natura:nether_leaves2:2", "natura:nether_leaves2:10"),
 			new TreeConfiguration().setLogs("natura:nether_logs:2").setLeaves("natura:nether_leaves:1"),
-			new TreeConfiguration().setLogs("natura:nether_logs2:0", "natura:nether_logs2:1")
-					.setLeaves("natura:nether_leaves:0"),
+			new TreeConfiguration().setLogs("natura:nether_logs2:0", "natura:nether_logs2:1").setLeaves("natura:nether_leaves:0"),
 			new TreeConfiguration().setLogs("natura:overworld_logs:0").setLeaves("natura:overworld_leaves:0"),
 			new TreeConfiguration().setLogs("natura:overworld_logs:1").setLeaves("natura:overworld_leaves:1"),
 			new TreeConfiguration().setLogs("natura:overworld_logs:2").setLeaves("natura:overworld_leaves:2"),

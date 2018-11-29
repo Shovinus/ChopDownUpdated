@@ -97,7 +97,7 @@ public class Config {
 		}
 
 		//Custom configs
-		String[] tempTreeConfig = config.getStringList("customTrees", CATEGORY,
+		String[] tempTreeConfig = config.getStringList("customTrees", MOD_CATEGORY,
 				new String[] {},
 				"Allows you to add your own custom trees, use the following google sheet to design your own trees more easily (Make a copy): http://bit.ly/treeconfig");
 		List<TreeConfiguration> tempTreeConfigurations = new ArrayList<TreeConfiguration>();

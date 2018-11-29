@@ -844,6 +844,7 @@ public class Tree implements Runnable {
 		public EntityItem entityDropItem(ItemStack stack, float offsetY) {
 
 			IBlockState state = getBlock();
+			Block block = this.getBlock().getBlock();
 			BlockPos pos = new BlockPos(this);
 			IBlockState toState = world.getBlockState(pos);
 
@@ -858,6 +859,24 @@ public class Tree implements Runnable {
 			}
 			Tree.dropDrops(pos, pos, toState, world);
 			world.setBlockState(pos, state);
+			if (this.tileEntityData != null && block instanceof ITileEntityProvider) {
+				TileEntity tileentity = this.world.getTileEntity(pos);
+
+				if (tileentity != null) {
+					NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
+
+					for (String s : this.tileEntityData.getKeySet()) {
+						NBTBase nbtbase = this.tileEntityData.getTag(s);
+
+						if (!"x".equals(s) && !"y".equals(s) && !"z".equals(s)) {
+							nbttagcompound.setTag(s, nbtbase.copy());
+						}
+					}
+
+					tileentity.readFromNBT(nbttagcompound);
+					tileentity.markDirty();
+				}
+			}
 			return null;
 		}
 	}
