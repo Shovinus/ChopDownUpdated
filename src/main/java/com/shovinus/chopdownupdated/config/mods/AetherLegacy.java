@@ -4,6 +4,6 @@ import com.shovinus.chopdownupdated.config.TreeConfiguration;
 
 public class AetherLegacy {
 	public static TreeConfiguration[] Trees = new TreeConfiguration[] { 
-			new TreeConfiguration().setLogs("aether_legacy:aether_log:0").setLeaves("aether_legacy:aether_leaves:0","aether_legacy:crystal_leaves:0"),
+			new TreeConfiguration().setLogs("aether_legacy:aether_log:.*").setLeaves("aether_legacy:aether_leaves:.*","aether_legacy:crystal_leaves:.*","aether_legacy:holiday_leaves:.*"),
 	};
 }

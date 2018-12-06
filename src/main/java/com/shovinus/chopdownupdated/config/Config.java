@@ -88,9 +88,36 @@ public class Config {
 		List<String> activeMods = new ArrayList<String>();
 		if (config.getBoolean("Vanilla", MOD_CATEGORY, true, "Vanilla"))
 			activeMods.add("Vanilla");
-		String[] availableMods = { "AetherLegacy","BiomesOPlenty", "DefiledLands", "ExtraTrees", "Forestry", "IndustrialCraft2",
-				"IntegratedDynamics", "Natura", "PamsHarvestCraft", "Plants", "Rustic", "SugiForest", "Terra", "Terraqueous",
-				"Thaumcraft", "TheBetweenLands", "TheTwighlightForest", "Traverse","Treasure2", "Tropicraft" };
+		String[] availableMods = { 
+				"AbyssalCraft",
+				"AetherLegacy",
+				"BetterWithAddons",
+				"BiomesOPlenty",
+				"Cuisine",
+				"DefiledLands",
+				"ExtraTrees",
+				"Forestry",
+				"IndustrialCraft2",				
+				"IntegratedDynamics",
+				"JurassiCraft", 
+				"Natura",
+				"NaturalPledge",
+				"PamsHarvestCraft",
+				"Plants",
+				"PrimalCore", 
+				"Rustic",
+				"SugiForest",
+				"Terra",
+				"Terraqueous",
+				"Thaumcraft",
+				"TheBetweenLands",
+				"TheErebus", 
+				"TheMidnight", 
+				"TheTwilightForest",
+				"Traverse",
+				"Treasure2",
+				"Tropicraft",
+				"VibrantJourneys" };
 		for (String mod : availableMods) {
 			if (config.getBoolean(mod, MOD_CATEGORY, false, mod))
 				activeMods.add(mod);
