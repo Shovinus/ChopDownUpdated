@@ -267,8 +267,10 @@ public class Tree implements Runnable {
             TreeMovePair pair = new TreeMovePair(from, to, this);
             fallingBlocks.put(pair.to, pair);
         }
+        pushLogsThroughPendingLeaves();
         fallingBlocksList = new LinkedList<>(fallingBlocks.keySet());
         Collections.sort(fallingBlocksList, new AxisComparer(DirectionSort.UP));
+        breakStackedPendingLeaves();
     }
 
     @Override
@@ -393,21 +395,152 @@ public class Tree implements Runnable {
         if (playerConfig.dontFell || useSolid) {
             manuallyDrop(pair, state);
         } else {
+            clearLeafLandingPath(pair);
             FallingBlockEntity fallingBlock = FallingBlockEntity.fall(world, pair.to, state);
             fallingBlock.setHurtsEntities(2.0F, 40);
         }
         return true;
     }
 
+    private void pushLogsThroughPendingLeaves() {
+        boolean moved;
+        do {
+            moved = false;
+            LinkedList<BlockPos> logPositions = new LinkedList<>();
+            for (TreeMovePair pair : fallingBlocks.values()) {
+                if (!pair.leaves) {
+                    logPositions.add(pair.to);
+                }
+            }
+            Collections.sort(logPositions, new AxisComparer(DirectionSort.DOWN));
+
+            for (BlockPos pos : logPositions) {
+                TreeMovePair pair = fallingBlocks.get(pos);
+                if (pair == null || pair.leaves) {
+                    continue;
+                }
+                moved = pushLogThroughPendingLeaves(pair) || moved;
+            }
+        } while (moved);
+    }
+
+    private boolean pushLogThroughPendingLeaves(TreeMovePair logPair) {
+        boolean moved = false;
+        TreeMovePair leafPair = fallingBlocks.get(fartherFallEdge(logPair.to));
+        while (leafPair != null && leafPair.leaves) {
+            swapTargets(logPair, leafPair);
+            moved = true;
+            leafPair = fallingBlocks.get(fartherFallEdge(logPair.to));
+        }
+
+        leafPair = fallingBlocks.get(logPair.to.below());
+        while (leafPair != null && leafPair.leaves) {
+            swapTargets(logPair, leafPair);
+            moved = true;
+            leafPair = fallingBlocks.get(logPair.to.below());
+        }
+        return moved;
+    }
+
+    private BlockPos fartherFallEdge(BlockPos pos) {
+        return pos.offset(fallX, 0, fallZ);
+    }
+
+    private void swapTargets(TreeMovePair first, TreeMovePair second) {
+        BlockPos firstTo = first.to;
+        BlockPos secondTo = second.to;
+        fallingBlocks.remove(firstTo);
+        fallingBlocks.remove(secondTo);
+        first.to = secondTo;
+        second.to = firstTo;
+        fallingBlocks.put(first.to, first);
+        fallingBlocks.put(second.to, second);
+    }
+
+    private void clearLeafLandingPath(TreeMovePair pair) {
+        BlockPos below = pair.to.below();
+        while (below.getY() > world.getMinBuildHeight()) {
+            boolean cleared = false;
+            if (Tree.isLeaves(below, world)) {
+                dropDrops(below, below, world.getBlockState(below), world);
+                world.setBlock(below, Blocks.AIR.defaultBlockState(), 3);
+                cleared = true;
+            }
+            if (breakPendingLeaf(below)) {
+                cleared = true;
+            }
+            if (!cleared) {
+                return;
+            }
+            below = below.below();
+        }
+    }
+
+    private void breakStackedPendingLeaves() {
+        LinkedList<BlockPos> leafPositions = new LinkedList<>();
+        for (BlockPos pos : fallingBlocksList) {
+            TreeMovePair pair = fallingBlocks.get(pos);
+            if (pair != null && pair.leaves) {
+                leafPositions.add(pos);
+            }
+        }
+        Collections.sort(leafPositions, new AxisComparer(DirectionSort.DOWN));
+
+        for (BlockPos pos : leafPositions) {
+            TreeMovePair pair = fallingBlocks.get(pos);
+            if (pair == null || !pair.leaves) {
+                continue;
+            }
+            breakPendingLeaf(pos.below());
+        }
+    }
+
+    private boolean breakPendingLeaf(BlockPos pos) {
+        TreeMovePair pair = fallingBlocks.get(pos);
+        if (pair == null || !pair.leaves || !fallingBlocksList.remove(pos)) {
+            return false;
+        }
+        fallingBlocks.remove(pos);
+        if (Tree.isLeaves(pair.from, world)) {
+            dropDrops(pair.from, pair.to, world.getBlockState(pair.from), world);
+            world.setBlock(pair.from, Blocks.AIR.defaultBlockState(), 3);
+        }
+        return true;
+    }
+
+    private void breakWorldLeaf(BlockPos pos) {
+        if (Tree.isLeaves(pos, world)) {
+            dropDrops(pos, pos, world.getBlockState(pos), world);
+            world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+        }
+    }
+
+    private void breakLeafAt(BlockPos pos) {
+        if (!breakPendingLeaf(pos)) {
+            breakWorldLeaf(pos);
+        }
+    }
+
+    private boolean isPendingLeaf(BlockPos pos) {
+        TreeMovePair pair = fallingBlocks.get(pos);
+        return pair != null && pair.leaves && fallingBlocksList.contains(pos);
+    }
+
     private void manuallyDrop(TreeMovePair pair, BlockState state) {
-        while (canMoveTo(pair.to.below(), !pair.leaves)) {
+        while (canMoveThroughBelow(pair)) {
             pair.to = pair.to.below();
+            breakLeafAt(pair.to);
             if (!isAir(pair.to)) {
                 dropDrops(pair.from, pair.to, world.getBlockState(pair.to), world);
                 world.setBlock(pair.to, Blocks.AIR.defaultBlockState(), 3);
             }
         }
         pair.move();
+    }
+
+    private boolean canMoveThroughBelow(TreeMovePair pair) {
+        BlockPos below = pair.to.below();
+        return canMoveTo(below, !pair.leaves) || Tree.isLeaves(below, world) || isPendingLeaf(below);
     }
 
     private boolean canMoveTo(BlockPos pos, boolean log) {
