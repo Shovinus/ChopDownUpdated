@@ -14,19 +14,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - minecraft: "1.20.1"
-            forge: "47.4.20"
+          - minecraft: "1.19.4"
+            forge: "45.4.3"
             java: "17"
             toolchain: "17"
             experimental: false
             note: "Primary supported build target"
-
-          - minecraft: "1.20.6"
-            forge: "50.2.8"
-            java: "21"
-            toolchain: "21"
-            experimental: true
-            note: "1.20.x compatibility probe"
 
     steps:
       - name: Checkout
@@ -39,9 +32,19 @@ jobs:
           java-version: ${{ matrix.java }}
 
       - name: Build compatibility target
+        shell: pwsh
+        env:
+          MINECRAFT_VERSION: ${{ matrix.minecraft }}
+          FORGE_VERSION: ${{ matrix.forge }}
+          JAVA_TOOLCHAIN_VERSION: ${{ matrix.toolchain }}
         run: |
           echo "Testing ${{ matrix.note }}"
-          ./gradlew.bat build `
-            "-Pminecraft_version=${{ matrix.minecraft }}" `
-            "-Pforge_version=${{ matrix.forge }}" `
-            "-Pjava_toolchain_version=${{ matrix.toolchain }}"
+          echo "Minecraft ${env:MINECRAFT_VERSION}, Forge ${env:FORGE_VERSION}, Java toolchain ${env:JAVA_TOOLCHAIN_VERSION}"
+          $gradleArgs = @(
+            "build",
+            "-Pminecraft_version=${env:MINECRAFT_VERSION}",
+            "-Pforge_version=${env:FORGE_VERSION}",
+            "-Pjava_toolchain_version=${env:JAVA_TOOLCHAIN_VERSION}",
+            "--stacktrace"
+          )
+          ./gradlew.bat @gradleArgs

@@ -4,7 +4,7 @@ import com.shovinus.chopdownupdated.config.TreeConfiguration;
 
 public class Vanilla {
 	public static TreeConfiguration[] Trees = new TreeConfiguration[] {
-			new TreeConfiguration().setLogs("minecraft:oak_log", "minecraft:oak_wood").setLeaves("minecraft:oak_leaves"),
+			new TreeConfiguration().setLogs("minecraft:oak_log", "minecraft:oak_wood").setLeaves("minecraft:oak_leaves", "minecraft:azalea_leaves", "minecraft:flowering_azalea_leaves"),
 			new TreeConfiguration().setLogs("minecraft:spruce_log", "minecraft:spruce_wood").setLeaves("minecraft:spruce_leaves"),
 			new TreeConfiguration().setLogs("minecraft:birch_log", "minecraft:birch_wood").setLeaves("minecraft:birch_leaves"),
 			new TreeConfiguration().setLogs("minecraft:jungle_log", "minecraft:jungle_wood").setLeaves("minecraft:jungle_leaves"),
