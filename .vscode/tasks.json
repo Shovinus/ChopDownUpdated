@@ -1,0 +1,111 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Forge 1.12: Build Jar",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.472.8-hotspot"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Forge 1.12: Run Client",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["runClient"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.472.8-hotspot"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Forge 1.12: Run Server",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["runServer"],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.472.8-hotspot"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Forge 1.12: Debug Client JVM",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["runClient", "--debug-jvm"],
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.472.8-hotspot"
+        }
+      },
+      "problemMatcher": {
+        "owner": "java",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Listening for transport dt_socket at address: 5005",
+          "endsPattern": "Listening for transport dt_socket at address: 5005"
+        }
+      }
+    },
+    {
+      "label": "Forge 1.12: Debug Server JVM",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["runServer", "--debug-jvm"],
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.472.8-hotspot"
+        }
+      },
+      "problemMatcher": {
+        "owner": "java",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Listening for transport dt_socket at address: 5005",
+          "endsPattern": "Listening for transport dt_socket at address: 5005"
+        }
+      }
+    },
+    {
+      "label": "Forge 1.12: Setup Dev Workspace",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["setupDevWorkspace"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-8.0.472.8-hotspot"
+        }
+      },
+      "problemMatcher": []
+    }
+  ]
+}
