@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 import com.shovinus.chopdownupdated.tree.DirectionSort;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 public class AxisComparer implements Comparator<BlockPos> {
 		private DirectionSort sort;

@@ -1,148 +1,125 @@
 package com.shovinus.chopdownupdated;
 
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.World;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-
-import java.util.LinkedList;
-import java.util.concurrent.*;
-
-import org.apache.commons.lang3.ArrayUtils;
-
 import com.shovinus.chopdownupdated.command.CDUCommand;
 import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.tree.Tree;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Mod(
-		modid = ChopDown.MODID,
-		name = ChopDown.MODNAME,
-		version = ChopDown.VERSION,
-		acceptedMinecraftVersions = "[1.9,1.11.2]",
-		acceptableRemoteVersions = "*",
-guiFactory = "com.shovinus.chopdownupdated.config.GuiConfigFactoryChopDown")
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+@Mod(ChopDown.MODID)
 public class ChopDown {
-	ExecutorService executor;
+    public static final String MODID = "chopdownupdated";
+    public static final String MODNAME = "ChopDownUpdated";
+    public static final String AUTHOR = "Shovinus";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MODNAME);
+    public static final LinkedList<Tree> FALLING_TREES = new LinkedList<>();
 
-	public static final String MODID = "chopdownupdated";
-	public static final String MODNAME = "ChopDownUpdated";
-	public static final String VERSION = "@VERSION@";
-	public static final String AUTHOR = "Shovinus";/*
-													 * Original Idea by Ternsip,however the mod does not really resemble
-													 * that in any way other that the turning of blocks in to falling
-													 * entities with a push out of 1 per y height.
-													 */
-	public static LinkedList<Tree> FallingTrees = new LinkedList<Tree>();
+    private final ExecutorService executor = Executors.newFixedThreadPool(2);
+    private static int tick = 0;
 
-	@EventHandler
-	public void init(FMLInitializationEvent event) {
-		MinecraftForge.EVENT_BUS.register(this);
-	}
+    public ChopDown() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        MinecraftForge.EVENT_BUS.register(this);
+    }
 
-	@EventHandler
+    @SubscribeEvent
+    public void onCommandRegister(RegisterCommandsEvent event) {
+        CDUCommand.register(event.getDispatcher());
+    }
 
-	public void preinit(FMLPreInitializationEvent event) throws Exception {
-		Config.load(event);
-	}
+    @SubscribeEvent
+    public void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel world) || !(event.getPlayer() instanceof ServerPlayer player)) {
+            return;
+        }
 
-	@EventHandler
-	public void serverLoad(FMLServerStartingEvent event) {
-		// register server commands
-		event.registerServerCommand(new CDUCommand());
-		executor = Executors.newFixedThreadPool(2);
-	}
+        BlockPos pos = event.getPos();
+        if (!Tree.isWood(pos, world) || !Config.allowedPlayers.contains(player.getClass().getName())) {
+            return;
+        }
+        if (!player.getMainHandItem().isEmpty() && Config.MatchesTool(Tree.stackName(player.getMainHandItem()))) {
+            return;
+        }
 
-	@SubscribeEvent
-	public void onBlockBreak(BlockEvent.BreakEvent event) {
+        TreeConfiguration config = Tree.findConfig(world, pos);
+        BlockPos playerStanding = player.blockPosition();
+        if (config == null || !Tree.isTrunk(pos, world, config) || !Tree.isWood(pos.above(), world)
+                || (playerStanding.getX() == 0 && playerStanding.getZ() == 0)) {
+            return;
+        }
 
-		World world = event.getWorld();
-		BlockPos pos = event.getPos();	
+        for (Tree tree : FALLING_TREES) {
+            if (tree.player == player) {
+                player.sendSystemMessage(Component.literal("Still chopping down the last tree"));
+                event.setCanceled(true);
+                return;
+            }
+        }
 
-		if (!Tree.isWood(pos, world)
-				|| !ArrayUtils.contains(Config.allowedPlayers, event.getPlayer().getClass().getName())) {
-			return;
-		}
-		if (event.getPlayer().getHeldItemMainhand() != null
-				&& Config.MatchesTool(Tree.stackName(event.getPlayer().getHeldItemMainhand()))) {
-			return;
-		}
-		TreeConfiguration config = Tree.findConfig(world, pos);
-		BlockPos playerStanding = event.getPlayer().getPosition();
-		if (config == null || !Tree.isTrunk(pos, world, config) || !Tree.isWood(pos.add(0, 1, 0), world)
-				|| (playerStanding.getX() == 0 && playerStanding.getZ() == 0)) {
-			return;
-		}
+        try {
+            Tree tree = new Tree(pos, world, player);
+            FALLING_TREES.add(tree);
+            executor.submit(tree);
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("Can't find a tree configuration for this log."));
+        }
+    }
 
-		// Check to see if this player has already started a tree chop event.
-		for (Tree tree : FallingTrees) {
-			if (tree.player == event.getPlayer()) {
-				event.getPlayer().addChatComponentMessage(new TextComponentString("Still chopping down the last tree"));
-				event.setCanceled(true);
-				return;
-			}
-		}
-		//Initialise the tree and add it to the list, get the executor to start chopping it down;;
-		Tree tree;
-		try {
-			tree = new Tree(pos, world, event.getPlayer());
-			FallingTrees.add(tree);
-			executor.submit(tree);
-		} catch (Exception e) {
-			event.getPlayer().addChatComponentMessage(new TextComponentString("Can't find a tree configuration for this log."));
-		}
+    @SubscribeEvent
+    public void onTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        try {
+            tick++;
+            if (tick % 4 == 0) {
+                tick = 0;
+                Iterator<Tree> iterator = FALLING_TREES.iterator();
+                while (iterator.hasNext()) {
+                    Tree tree = iterator.next();
+                    if (tree.finishedCalculation && tree.dropBlocks()) {
+                        iterator.remove();
+                    } else if (tree.failedToBuild) {
+                        iterator.remove();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            LOGGER.error("Error while continuing to chop trees", ex);
+        }
+    }
 
-	}
-
-	static int tick = 0;
-
-	@SubscribeEvent
-	public void onTick(TickEvent.ServerTickEvent event) {
-		try {
-			tick++;
-			if (tick % 4 == 0) {
-				tick = 0;
-				for (Tree tree : FallingTrees) {
-					if (tree.finishedCalculation) {
-						if (tree.dropBlocks()) {
-							FallingTrees.remove(tree);
-						}
-					}
-					if (tree.failedToBuild) {
-						FallingTrees.remove(tree);
-					}
-				}
-			}
-		} catch (Exception ex) {
-			System.out.println("Error while continuing to chop trees");
-		}
-	}
-
-	@SubscribeEvent
-	public void clickBlock(PlayerInteractEvent.LeftClickBlock event) {
-		if (!(event.getEntityPlayer() instanceof EntityPlayerMP)) {
-			return;
-		}
-		if (Config.getPlayerConfig(event.getEntityPlayer().getUniqueID()).showBlockName) {
-			World world = event.getWorld();
-			BlockPos pos = event.getPos();
-			event.getEntityPlayer().addChatComponentMessage(new TextComponentString("Block:" + Tree.blockName(pos, world)));
-			if (event.getEntityPlayer().getHeldItemMainhand() != null) {
-				event.getEntityPlayer().addChatComponentMessage(new TextComponentString(
-						"Tool:" + Tree.stackName(event.getEntityPlayer().getHeldItemMainhand())));
-			}
-			event.getEntityPlayer().addChatComponentMessage(
-					new TextComponentString("Player Class:" + event.getEntityPlayer().getClass().getName()));
-		}
-	}
+    @SubscribeEvent
+    public void clickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel world)) {
+            return;
+        }
+        if (Config.getPlayerConfig(player.getUUID()).showBlockName) {
+            BlockPos pos = event.getPos();
+            player.sendSystemMessage(Component.literal("Block:" + Tree.blockName(pos, world)));
+            if (!player.getMainHandItem().isEmpty()) {
+                player.sendSystemMessage(Component.literal("Tool:" + Tree.stackName(player.getMainHandItem())));
+            }
+            player.sendSystemMessage(Component.literal("Player Class:" + player.getClass().getName()));
+        }
+    }
 }

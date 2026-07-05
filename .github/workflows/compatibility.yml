@@ -1,0 +1,47 @@
+name: Compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: MC ${{ matrix.minecraft }} / Forge ${{ matrix.forge }}
+    runs-on: windows-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - minecraft: "1.20.1"
+            forge: "47.4.20"
+            java: "17"
+            toolchain: "17"
+            experimental: false
+            note: "Primary supported build target"
+
+          - minecraft: "1.20.6"
+            forge: "50.2.8"
+            java: "21"
+            toolchain: "21"
+            experimental: true
+            note: "1.20.x compatibility probe"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Build compatibility target
+        run: |
+          echo "Testing ${{ matrix.note }}"
+          ./gradlew.bat build `
+            -Pminecraft_version=${{ matrix.minecraft }} `
+            -Pforge_version=${{ matrix.forge }} `
+            -Pjava_toolchain_version=${{ matrix.toolchain }}

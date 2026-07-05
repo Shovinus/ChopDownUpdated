@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Forge: Debug Client",
+      "type": "java",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "preLaunchTask": "Forge: Debug Client JVM",
+      "timeout": 120000
+    },
+    {
+      "name": "Forge: Debug Server",
+      "type": "java",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "preLaunchTask": "Forge: Debug Server JVM",
+      "timeout": 120000
+    }
+  ]
+}

@@ -1,55 +1,46 @@
 package com.shovinus.chopdownupdated.tree;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 class TreeMovePair {
-		public BlockPos to;
-		public BlockPos from;
-		public Tree tree;
-		public Boolean leaves;
-		public TileEntity tile;
-		public IBlockState state;
-		public Boolean moved = false;
+    public BlockPos to;
+    public BlockPos from;
+    public final Tree tree;
+    public final boolean leaves;
+    public final BlockEntity tile;
+    public final BlockState state;
+    public boolean moved = false;
 
-		public TreeMovePair(BlockPos from, BlockPos to, Tree tree) {
-			this.from = from;
-			this.to = to;
-			this.tree= tree;
-			leaves = tree.isLeaves(from);
-			tile = tree.world.getTileEntity(from);
-			state = tree.world.getBlockState(from);
-			if (tree.isLog(from)) {
-				state = tree.rotateLog(tree.world, state);
-			}
+    TreeMovePair(BlockPos from, BlockPos to, Tree tree) {
+        this.from = from;
+        this.to = to;
+        this.tree = tree;
+        this.leaves = tree.isLeaves(from);
+        this.tile = tree.world.getBlockEntity(from);
+        BlockState originalState = tree.world.getBlockState(from);
+        this.state = tree.isLog(from) ? tree.rotateLog(originalState) : originalState;
+    }
 
-
-		}
-		public void move() {
-			IBlockState state2 = tree.world.getBlockState(to);
-			if (!tree.isAir(to)) {
-				Tree.dropDrops(from, to, state2,tree.world);
-			}
-			tree.world.setBlockState(to, state);
-			if (tile != null) {
-				NBTTagCompound tileEntityData = tile.writeToNBT(new NBTTagCompound());
-				TileEntity tileentity = tree.world.getTileEntity(to);
-				if (tileentity != null) {
-					NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
-
-					for (String s : tileEntityData.getKeySet()) {
-						NBTBase nbtbase = tileEntityData.getTag(s);
-
-						if (!"x".equals(s) && !"y".equals(s) && !"z".equals(s)) {
-							nbttagcompound.setTag(s, nbtbase.copy());
-						}
-					}
-					tileentity.readFromNBT(nbttagcompound);
-					tileentity.markDirty();
-				}
-			}
-		}
-	}
+    public void move() {
+        ServerLevel world = tree.world;
+        if (!tree.isAir(to)) {
+            Tree.dropDrops(from, to, world.getBlockState(to), world);
+        }
+        world.setBlock(to, state, 3);
+        if (tile != null) {
+            BlockEntity targetTile = world.getBlockEntity(to);
+            if (targetTile != null) {
+                CompoundTag tileEntityData = tile.saveWithoutMetadata();
+                tileEntityData.remove("x");
+                tileEntityData.remove("y");
+                tileEntityData.remove("z");
+                targetTile.load(tileEntityData);
+                targetTile.setChanged();
+            }
+        }
+    }
+}

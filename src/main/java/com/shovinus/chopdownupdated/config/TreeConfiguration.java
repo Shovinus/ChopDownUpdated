@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 public class TreeConfiguration {
 	/*
 	 * The horizontal radius from the trunk to check for tree members
@@ -99,7 +97,7 @@ public class TreeConfiguration {
 	//Gets all blocks associated with this tree
 	public String[] Blocks() {
 		if (blocks == null) {
-			blocks =ArrayUtils.addAll(Config.ConvertListToArray(logs), Leaves());
+			blocks = Config.MergeArray(Config.ConvertListToArray(logs), Leaves());
 		}
 		return blocks;
 	}

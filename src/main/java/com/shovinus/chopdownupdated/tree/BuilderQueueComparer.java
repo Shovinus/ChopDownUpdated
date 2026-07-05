@@ -3,7 +3,7 @@ package com.shovinus.chopdownupdated.tree;
 import java.util.Comparator;
 import java.util.HashMap;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 public class BuilderQueueComparer implements Comparator<BlockPos> {
 	private HashMap<BlockPos, Integer> map;

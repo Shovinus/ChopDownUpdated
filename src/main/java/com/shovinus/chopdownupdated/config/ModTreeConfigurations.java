@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.shovinus.chopdownupdated.config.mods.*;
+import com.shovinus.chopdownupdated.config.mods.Vanilla;
 
 public class ModTreeConfigurations {
 	Map<String, TreeConfiguration[]> Mods = new HashMap<String, TreeConfiguration[]>();
@@ -54,26 +54,6 @@ public class ModTreeConfigurations {
 	}
 	public ModTreeConfigurations() {
 		Mods.put("Vanilla", Vanilla.Trees);
-		Mods.put("AetherLegacy", AetherLegacy.Trees);
-		Mods.put("BiomesOPlenty", BiomesOPlenty.Trees);
-		Mods.put("DefiledLands", DefiledLands.Trees);
-		Mods.put("ExtraTrees", ExtraTrees.Trees);
-		Mods.put("Forestry", Forestry.Trees);
-		Mods.put("IndustrialCraft2", IndustrialCraft2.Trees);
-		Mods.put("IntegratedDynamics", IntegratedDynamics.Trees);
-		Mods.put("Natura", Natura.Trees);
-		Mods.put("PamsHarvestCraft", PamsHarvestCraft.Trees);
-		Mods.put("Plants", Plants.Trees);
-		Mods.put("Rustic", Rustic.Trees);
-		Mods.put("SugiForest", SugiForest.Trees);
-		Mods.put("Terra", Terra.Trees);
-		Mods.put("Terraqueous", Terraqueous.Trees);
-		Mods.put("Thaumcraft", Thaumcraft.Trees);
-		Mods.put("TheBetweenLands", TheBetweenLands.Trees);
-		Mods.put("TheTwighlightForest", TheTwighlightForest.Trees);
-		Mods.put("Traverse", Traverse.Trees);
-		Mods.put("Treasure2", Treasure2.Trees);
-		Mods.put("Tropicraft", Tropicraft.Trees);
 	}
 	public void setCustomTrees(TreeConfiguration[] trees) {
 		Mods.put("_Custom", trees);
