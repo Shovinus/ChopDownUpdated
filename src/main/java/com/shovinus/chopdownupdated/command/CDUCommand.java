@@ -53,13 +53,13 @@ public class CDUCommand {
         PersonalConfig config = Config.getPlayerConfig(player.getUUID());
         boolean value = requestedValue == null ? !getter.apply(config) : requestedValue;
         setter.accept(config, value);
-        source.sendSuccess(() -> Component.literal(name + (value ? " Enabled" : " Disabled")), false);
+        source.sendSuccess(Component.literal(name + (value ? " Enabled" : " Disabled")), false);
         return 1;
     }
 
     private static int setBreakLeaves(CommandSourceStack source, boolean value) {
         Config.setBreakLeaves(value);
-        source.sendSuccess(() -> Component.literal("breakLeaves" + (value ? " Enabled" : " Disabled")), false);
+        source.sendSuccess(Component.literal("breakLeaves" + (value ? " Enabled" : " Disabled")), false);
         return 1;
     }
 }

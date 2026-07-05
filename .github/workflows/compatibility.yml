@@ -42,6 +42,6 @@ jobs:
         run: |
           echo "Testing ${{ matrix.note }}"
           ./gradlew.bat build `
-            -Pminecraft_version=${{ matrix.minecraft }} `
-            -Pforge_version=${{ matrix.forge }} `
-            -Pjava_toolchain_version=${{ matrix.toolchain }}
+            "-Pminecraft_version=${{ matrix.minecraft }}" `
+            "-Pforge_version=${{ matrix.forge }}" `
+            "-Pjava_toolchain_version=${{ matrix.toolchain }}"
