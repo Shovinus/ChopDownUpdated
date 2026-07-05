@@ -426,24 +426,13 @@ public class Tree implements Runnable {
 
     private boolean pushLogThroughPendingLeaves(TreeMovePair logPair) {
         boolean moved = false;
-        TreeMovePair leafPair = fallingBlocks.get(fartherFallEdge(logPair.to));
-        while (leafPair != null && leafPair.leaves) {
-            swapTargets(logPair, leafPair);
-            moved = true;
-            leafPair = fallingBlocks.get(fartherFallEdge(logPair.to));
-        }
-
-        leafPair = fallingBlocks.get(logPair.to.below());
+        TreeMovePair leafPair = fallingBlocks.get(logPair.to.below());
         while (leafPair != null && leafPair.leaves) {
             swapTargets(logPair, leafPair);
             moved = true;
             leafPair = fallingBlocks.get(logPair.to.below());
         }
         return moved;
-    }
-
-    private BlockPos fartherFallEdge(BlockPos pos) {
-        return pos.offset(fallX, 0, fallZ);
     }
 
     private void swapTargets(TreeMovePair first, TreeMovePair second) {
