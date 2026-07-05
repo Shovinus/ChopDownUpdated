@@ -39,9 +39,19 @@ jobs:
           java-version: ${{ matrix.java }}
 
       - name: Build compatibility target
+        shell: pwsh
+        env:
+          MINECRAFT_VERSION: ${{ matrix.minecraft }}
+          FORGE_VERSION: ${{ matrix.forge }}
+          JAVA_TOOLCHAIN_VERSION: ${{ matrix.toolchain }}
         run: |
           echo "Testing ${{ matrix.note }}"
-          ./gradlew.bat build `
-            -Pminecraft_version=${{ matrix.minecraft }} `
-            -Pforge_version=${{ matrix.forge }} `
-            -Pjava_toolchain_version=${{ matrix.toolchain }}
+          echo "Minecraft ${env:MINECRAFT_VERSION}, Forge ${env:FORGE_VERSION}, Java toolchain ${env:JAVA_TOOLCHAIN_VERSION}"
+          $gradleArgs = @(
+            "build",
+            "-Pminecraft_version=${env:MINECRAFT_VERSION}",
+            "-Pforge_version=${env:FORGE_VERSION}",
+            "-Pjava_toolchain_version=${env:JAVA_TOOLCHAIN_VERSION}",
+            "--stacktrace"
+          )
+          ./gradlew.bat @gradleArgs

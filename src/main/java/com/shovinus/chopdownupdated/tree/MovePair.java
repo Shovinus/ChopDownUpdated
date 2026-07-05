@@ -6,6 +6,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.lang.reflect.Method;
+
 class TreeMovePair {
     public BlockPos to;
     public BlockPos from;
@@ -34,13 +36,43 @@ class TreeMovePair {
         if (tile != null) {
             BlockEntity targetTile = world.getBlockEntity(to);
             if (targetTile != null) {
-                CompoundTag tileEntityData = tile.saveWithoutMetadata();
-                tileEntityData.remove("x");
-                tileEntityData.remove("y");
-                tileEntityData.remove("z");
-                targetTile.load(tileEntityData);
-                targetTile.setChanged();
+                copyTileData(world, targetTile);
             }
+        }
+    }
+
+    private void copyTileData(ServerLevel world, BlockEntity targetTile) {
+        try {
+            CompoundTag tileEntityData = saveTileData(world);
+            tileEntityData.remove("x");
+            tileEntityData.remove("y");
+            tileEntityData.remove("z");
+            loadTileData(world, targetTile, tileEntityData);
+            targetTile.setChanged();
+        } catch (ReflectiveOperationException ex) {
+            // Tile entity APIs changed across 1.20.x; if copying fails, the block still moves.
+        }
+    }
+
+    private CompoundTag saveTileData(ServerLevel world) throws ReflectiveOperationException {
+        try {
+            Method method = BlockEntity.class.getMethod("saveWithoutMetadata");
+            return (CompoundTag) method.invoke(tile);
+        } catch (NoSuchMethodException ex) {
+            Method method = BlockEntity.class.getMethod("saveWithoutMetadata", net.minecraft.core.HolderLookup.Provider.class);
+            return (CompoundTag) method.invoke(tile, world.registryAccess());
+        }
+    }
+
+    private void loadTileData(ServerLevel world, BlockEntity targetTile, CompoundTag tileEntityData)
+            throws ReflectiveOperationException {
+        try {
+            Method method = BlockEntity.class.getMethod("load", CompoundTag.class);
+            method.invoke(targetTile, tileEntityData);
+        } catch (NoSuchMethodException ex) {
+            Method method = BlockEntity.class.getMethod("loadWithComponents", CompoundTag.class,
+                    net.minecraft.core.HolderLookup.Provider.class);
+            method.invoke(targetTile, tileEntityData, world.registryAccess());
         }
     }
 }
