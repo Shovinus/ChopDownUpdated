@@ -10,6 +10,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -18,7 +19,7 @@ import java.util.function.Supplier;
 public class CDUCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("chopdownupdated")
-                .requires(source -> source.hasPermission(2));
+                .requires(source -> hasGamemasterPermission(source));
 
         registerToggle(root, "makeGlass", cfg -> cfg.makeGlass, (cfg, value) -> cfg.makeGlass = value);
         registerToggle(root, "dontDrop", cfg -> cfg.dontFell, (cfg, value) -> cfg.dontFell = value);
@@ -75,6 +76,27 @@ public class CDUCommand {
                 method.invoke(source, message, false);
             } catch (ReflectiveOperationException ignored) {
             }
+        }
+    }
+
+    private static boolean hasGamemasterPermission(CommandSourceStack source) {
+        try {
+            Method method = source.getClass().getMethod("hasPermission", int.class);
+            return (Boolean) method.invoke(source, 2);
+        } catch (ReflectiveOperationException ignored) {
+        }
+
+        try {
+            Method permissionsMethod = source.getClass().getMethod("permissions");
+            Object permissionSet = permissionsMethod.invoke(source);
+            Class<?> permissionsClass = Class.forName("net.minecraft.server.permissions.Permissions");
+            Field gamemasterField = permissionsClass.getField("COMMANDS_GAMEMASTER");
+            Object gamemasterPermission = gamemasterField.get(null);
+            Method hasPermission = permissionSet.getClass()
+                    .getMethod("hasPermission", Class.forName("net.minecraft.server.permissions.Permission"));
+            return (Boolean) hasPermission.invoke(permissionSet, gamemasterPermission);
+        } catch (ReflectiveOperationException ignored) {
+            return false;
         }
     }
 }

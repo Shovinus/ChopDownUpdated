@@ -49,10 +49,23 @@ minecraft {
 }
 
 repositories {
+    if (!configurations.findByName('minecraft')) {
+        minecraft.mavenizer(it)
+        maven fg.forgeMaven
+        maven fg.minecraftLibsMaven
+        mavenCentral()
+    }
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    def forgeDependency = "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    if (configurations.findByName('minecraft')) {
+        minecraft forgeDependency
+    } else {
+        implementation minecraft.dependency(forgeDependency)
+        annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {

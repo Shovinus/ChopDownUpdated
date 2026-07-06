@@ -20,8 +20,11 @@ import net.minecraftforge.fml.config.ModConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.function.Consumer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,7 +41,70 @@ public class ChopDown {
 
     public ChopDown() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        MinecraftForge.EVENT_BUS.register(this);
+        registerConfigEventHandler();
+        registerToForgeEventBus();
+    }
+
+    private void registerConfigEventHandler() {
+        try {
+            Class<?> contextClass = Class.forName("net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext");
+            Object context = contextClass.getMethod("get").invoke(null);
+
+            try {
+                Object modEventBus = contextClass.getMethod("getModEventBus").invoke(context);
+                Method addListener = modEventBus.getClass().getMethod("addListener", Consumer.class);
+                addListener.invoke(modEventBus, (Consumer<Object>) Config::onConfigLoad);
+                return;
+            } catch (NoSuchMethodException ignored) {
+            }
+
+            Object modBusGroup = contextClass.getMethod("getModBusGroup").invoke(context);
+            addModernConfigListener("net.minecraftforge.fml.event.config.ModConfigEvent$Loading", modBusGroup);
+            addModernConfigListener("net.minecraftforge.fml.event.config.ModConfigEvent$Reloading", modBusGroup);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.warn("Unable to register Chop Down config reload listener; using current config values", e);
+            Config.reloadConfig();
+        }
+    }
+
+    private void addModernConfigListener(String eventClassName, Object modBusGroup) throws ReflectiveOperationException {
+        Class<?> eventClass = Class.forName(eventClassName);
+        Class<?> busGroupClass = Class.forName("net.minecraftforge.eventbus.api.bus.BusGroup");
+        Object eventBus = eventClass.getMethod("getBus", busGroupClass).invoke(null, modBusGroup);
+        Method addListener = eventBus.getClass().getMethod("addListener", Consumer.class);
+        addListener.invoke(eventBus, (Consumer<Object>) Config::onConfigLoad);
+    }
+
+    private void registerToForgeEventBus() {
+        try {
+            Object eventBus = MinecraftForge.class.getField("EVENT_BUS").get(null);
+            if ("net.minecraftforge.common.EventBusMigrationHelper".equals(eventBus.getClass().getName())) {
+                registerModernEventHandlers();
+            } else {
+                Method register = eventBus.getClass().getMethod("register", Object.class);
+                register.invoke(eventBus, this);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to register Chop Down event handlers", e);
+        }
+    }
+
+    private void registerModernEventHandlers() throws ReflectiveOperationException {
+        addModernListener("net.minecraftforge.event.RegisterCommandsEvent", event ->
+                onCommandRegister((RegisterCommandsEvent) event));
+        addModernListener("net.minecraftforge.event.level.BlockEvent$BreakEvent", event ->
+                onBlockBreak((BlockEvent.BreakEvent) event));
+        addModernListener("net.minecraftforge.event.TickEvent$ServerTickEvent$Post", this::onModernServerTick);
+        addModernListener("net.minecraftforge.event.entity.player.PlayerInteractEvent$LeftClickBlock", event ->
+                clickBlock((PlayerInteractEvent.LeftClickBlock) event));
+    }
+
+    private void addModernListener(String eventClassName, Consumer<Object> listener) throws ReflectiveOperationException {
+        Class<?> eventClass = Class.forName(eventClassName);
+        Field busField = eventClass.getField("BUS");
+        Object bus = busField.get(null);
+        Method addListener = bus.getClass().getMethod("addListener", Consumer.class);
+        addListener.invoke(bus, listener);
     }
 
     @SubscribeEvent
@@ -89,18 +155,24 @@ public class ChopDown {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        onModernServerTick(event);
+    }
+
+    private void onModernServerTick(Object event) {
         try {
             tick++;
-            if (tick % 4 == 0) {
+            boolean throttledTick = tick % 4 == 0;
+            if (throttledTick) {
                 tick = 0;
-                Iterator<Tree> iterator = FALLING_TREES.iterator();
-                while (iterator.hasNext()) {
-                    Tree tree = iterator.next();
-                    if (tree.finishedCalculation && tree.dropBlocks()) {
-                        iterator.remove();
-                    } else if (tree.failedToBuild) {
-                        iterator.remove();
-                    }
+            }
+
+            Iterator<Tree> iterator = FALLING_TREES.iterator();
+            while (iterator.hasNext()) {
+                Tree tree = iterator.next();
+                if (tree.failedToBuild) {
+                    iterator.remove();
+                } else if (tree.finishedCalculation && (!tree.startedDropping || throttledTick) && tree.dropBlocks()) {
+                    iterator.remove();
                 }
             }
         } catch (Exception ex) {

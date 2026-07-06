@@ -3,16 +3,13 @@ package com.shovinus.chopdownupdated.config;
 import com.google.gson.Gson;
 import com.shovinus.chopdownupdated.ChopDown;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = ChopDown.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
     public static final String CATEGORY = "General";
     public static final String MOD_CATEGORY = "Mod Compatibility";
@@ -153,10 +150,20 @@ public class Config {
         reloadConfig();
     }
 
-    @SubscribeEvent
-    public static void onConfigLoad(ModConfigEvent event) {
-        if (event.getConfig().getSpec() == SPEC) {
+    public static void onConfigLoad(Object event) {
+        if (configSpec(event) == SPEC) {
             reloadConfig();
+        }
+    }
+
+    private static Object configSpec(Object event) {
+        try {
+            Object config = event.getClass().getMethod("getConfig").invoke(event);
+            Method getSpec = config.getClass().getMethod("getSpec");
+            return getSpec.invoke(config);
+        } catch (ReflectiveOperationException e) {
+            ChopDown.LOGGER.warn("Unable to inspect Chop Down config event", e);
+            return null;
         }
     }
 

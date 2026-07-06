@@ -27,7 +27,7 @@ jobs:
             note: "Primary supported build target"
           - minecraft: "1.21.11"
             forge: "61.1.8"
-            java: "17"
+            java: "21"
             toolchain: "21"
             gradle: "9.3.0"
             forgegradle: "7.0.31"

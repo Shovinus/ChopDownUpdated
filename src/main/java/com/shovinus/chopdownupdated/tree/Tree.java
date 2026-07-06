@@ -6,7 +6,6 @@ import com.shovinus.chopdownupdated.config.PersonalConfig;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -19,6 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -45,9 +45,13 @@ public class Tree implements Runnable {
     int leafLimit = 7;
     boolean wentUp = false;
 
-    public boolean finishedCalculation = false;
-    public boolean failedToBuild = false;
+    public volatile boolean finishedCalculation = false;
+    public volatile boolean failedToBuild = false;
+    public volatile boolean startedDropping = false;
     LinkedList<Tree> nearbyTrees = new LinkedList<>();
+
+    private static volatile Method registryGetKeyMethod;
+    private static volatile Method minBuildHeightMethod;
 
     public Tree(BlockPos pos, ServerLevel world) throws Exception {
         initTree(pos, world);
@@ -222,13 +226,29 @@ public class Tree implements Runnable {
     }
 
     public static String blockName(BlockPos pos, ServerLevel world) {
-        ResourceLocation loc = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
-        return loc.toString();
+        return registryName(BuiltInRegistries.BLOCK, world.getBlockState(pos).getBlock());
     }
 
     public static String stackName(ItemStack stack) {
-        ResourceLocation loc = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return loc.toString();
+        return registryName(BuiltInRegistries.ITEM, stack.getItem());
+    }
+
+    private static String registryName(Object registry, Object value) {
+        try {
+            Object key = registryGetKeyMethod().invoke(registry, value);
+            return key.toString();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to resolve registry name for " + value, e);
+        }
+    }
+
+    private static Method registryGetKeyMethod() throws ReflectiveOperationException {
+        Method method = registryGetKeyMethod;
+        if (method == null) {
+            method = Class.forName("net.minecraft.core.Registry").getMethod("getKey", Object.class);
+            registryGetKeyMethod = method;
+        }
+        return method;
     }
 
     private void getRealisticTree() {
@@ -284,6 +304,7 @@ public class Tree implements Runnable {
     }
 
     public boolean dropBlocks() {
+        startedDropping = true;
         int blocksRemaining = Config.maxDropsPerTickPerTree;
         int size = fallingBlocksList.size();
         for (int i = 0; i < size; i++) {
@@ -448,7 +469,7 @@ public class Tree implements Runnable {
 
     private void clearFallingPath(TreeMovePair pair) {
         BlockPos below = pair.to.below();
-        while (below.getY() > world.getMinBuildHeight()) {
+        while (below.getY() > minBuildHeight(world)) {
             if (isAir(below)) {
                 below = below.below();
                 continue;
@@ -530,7 +551,28 @@ public class Tree implements Runnable {
     }
 
     private boolean canMoveTo(BlockPos pos, boolean log) {
-        return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > world.getMinBuildHeight();
+        return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > minBuildHeight(world);
+    }
+
+    private static int minBuildHeight(Object level) {
+        try {
+            return (Integer) minBuildHeightMethod(level).invoke(level);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to resolve world minimum build height", e);
+        }
+    }
+
+    private static Method minBuildHeightMethod(Object level) throws ReflectiveOperationException {
+        Method method = minBuildHeightMethod;
+        if (method == null) {
+            try {
+                method = level.getClass().getMethod("getMinBuildHeight");
+            } catch (NoSuchMethodException ignored) {
+                method = Class.forName("net.minecraft.world.level.LevelHeightAccessor").getMethod("getMinY");
+            }
+            minBuildHeightMethod = method;
+        }
+        return method;
     }
 
     private double horizontalDistance(BlockPos pos1, BlockPos pos2) {
