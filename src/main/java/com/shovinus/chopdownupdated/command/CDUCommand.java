@@ -10,8 +10,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class CDUCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -53,13 +55,26 @@ public class CDUCommand {
         PersonalConfig config = Config.getPlayerConfig(player.getUUID());
         boolean value = requestedValue == null ? !getter.apply(config) : requestedValue;
         setter.accept(config, value);
-        source.sendSuccess(Component.literal(name + (value ? " Enabled" : " Disabled")), false);
+        sendSuccess(source, Component.literal(name + (value ? " Enabled" : " Disabled")));
         return 1;
     }
 
     private static int setBreakLeaves(CommandSourceStack source, boolean value) {
         Config.setBreakLeaves(value);
-        source.sendSuccess(Component.literal("breakLeaves" + (value ? " Enabled" : " Disabled")), false);
+        sendSuccess(source, Component.literal("breakLeaves" + (value ? " Enabled" : " Disabled")));
         return 1;
+    }
+
+    private static void sendSuccess(CommandSourceStack source, Component message) {
+        try {
+            Method method = CommandSourceStack.class.getMethod("sendSuccess", Supplier.class, boolean.class);
+            method.invoke(source, (Supplier<Component>) () -> message, false);
+        } catch (ReflectiveOperationException ex) {
+            try {
+                Method method = CommandSourceStack.class.getMethod("sendSuccess", Component.class, boolean.class);
+                method.invoke(source, message, false);
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
     }
 }

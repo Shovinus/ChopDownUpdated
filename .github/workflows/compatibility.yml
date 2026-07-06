@@ -14,12 +14,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - minecraft: "1.19.4"
-            forge: "45.4.3"
+          - minecraft: "1.21.1"
+            forge: "52.1.14"
             java: "17"
-            toolchain: "17"
+            toolchain: "21"
+            minecraft_range: "[1.21,1.21.2)"
+            forge_range: "[52,53)"
+            loader_range: "[52,53)"
             experimental: false
             note: "Primary supported build target"
+          - minecraft: "1.21.11"
+            forge: "61.1.8"
+            java: "17"
+            toolchain: "21"
+            minecraft_range: "[1.21.11,1.21.12)"
+            forge_range: "[61,62)"
+            loader_range: "[61,62)"
+            experimental: true
+            note: "Compatibility check for Minecraft 1.21.11"
 
     steps:
       - name: Checkout
@@ -37,6 +49,9 @@ jobs:
           MINECRAFT_VERSION: ${{ matrix.minecraft }}
           FORGE_VERSION: ${{ matrix.forge }}
           JAVA_TOOLCHAIN_VERSION: ${{ matrix.toolchain }}
+          MINECRAFT_VERSION_RANGE: ${{ matrix.minecraft_range }}
+          FORGE_VERSION_RANGE: ${{ matrix.forge_range }}
+          LOADER_VERSION_RANGE: ${{ matrix.loader_range }}
         run: |
           echo "Testing ${{ matrix.note }}"
           echo "Minecraft ${env:MINECRAFT_VERSION}, Forge ${env:FORGE_VERSION}, Java toolchain ${env:JAVA_TOOLCHAIN_VERSION}"
@@ -45,6 +60,9 @@ jobs:
             "-Pminecraft_version=${env:MINECRAFT_VERSION}",
             "-Pforge_version=${env:FORGE_VERSION}",
             "-Pjava_toolchain_version=${env:JAVA_TOOLCHAIN_VERSION}",
+            "-Pminecraft_version_range=${env:MINECRAFT_VERSION_RANGE}",
+            "-Pforge_version_range=${env:FORGE_VERSION_RANGE}",
+            "-Ploader_version_range=${env:LOADER_VERSION_RANGE}",
             "--stacktrace"
           )
           ./gradlew.bat @gradleArgs
