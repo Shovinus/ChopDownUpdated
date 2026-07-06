@@ -1,4 +1,5 @@
 plugins {
+    id 'java'
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
@@ -18,10 +19,21 @@ minecraft {
     mappings channel: 'official', version: minecraft_version
 
     runs {
-        configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
+        configureEach { runConfig ->
+            if (runConfig.hasProperty('workingDir')) {
+                runConfig.workingDir = project.layout.projectDirectory.dir('run')
+            } else {
+                workingDirectory project.file('run')
+            }
+
+            if (runConfig.respondsTo('systemProperty', String, Object)) {
+                systemProperty 'forge.logging.markers', 'REGISTRIES'
+                systemProperty 'forge.logging.console.level', 'debug'
+            } else {
+                property 'forge.logging.markers', 'REGISTRIES'
+                property 'forge.logging.console.level', 'debug'
+            }
+
             mods {
                 chopdownupdated {
                     source sourceSets.main

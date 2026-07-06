@@ -18,6 +18,8 @@ jobs:
             forge: "52.1.14"
             java: "17"
             toolchain: "21"
+            gradle: "8.12.1"
+            forgegradle: "6.0.54"
             minecraft_range: "[1.21,1.21.2)"
             forge_range: "[52,53)"
             loader_range: "[52,53)"
@@ -27,6 +29,8 @@ jobs:
             forge: "61.1.8"
             java: "17"
             toolchain: "21"
+            gradle: "9.3.0"
+            forgegradle: "7.0.31"
             minecraft_range: "[1.21.11,1.21.12)"
             forge_range: "[61,62)"
             loader_range: "[61,62)"
@@ -49,12 +53,25 @@ jobs:
           MINECRAFT_VERSION: ${{ matrix.minecraft }}
           FORGE_VERSION: ${{ matrix.forge }}
           JAVA_TOOLCHAIN_VERSION: ${{ matrix.toolchain }}
+          GRADLE_VERSION: ${{ matrix.gradle }}
+          FORGEGRADLE_VERSION: ${{ matrix.forgegradle }}
           MINECRAFT_VERSION_RANGE: ${{ matrix.minecraft_range }}
           FORGE_VERSION_RANGE: ${{ matrix.forge_range }}
           LOADER_VERSION_RANGE: ${{ matrix.loader_range }}
         run: |
           echo "Testing ${{ matrix.note }}"
           echo "Minecraft ${env:MINECRAFT_VERSION}, Forge ${env:FORGE_VERSION}, Java toolchain ${env:JAVA_TOOLCHAIN_VERSION}"
+          echo "Gradle ${env:GRADLE_VERSION}, ForgeGradle ${env:FORGEGRADLE_VERSION}"
+
+          $wrapperProperties = "gradle/wrapper/gradle-wrapper.properties"
+          (Get-Content $wrapperProperties) `
+            -replace "gradle-[0-9.]+-bin\.zip", "gradle-${env:GRADLE_VERSION}-bin.zip" |
+            Set-Content $wrapperProperties
+
+          (Get-Content "build.gradle") `
+            -replace "id 'net\.minecraftforge\.gradle' version '[^']+'", "id 'net.minecraftforge.gradle' version '${env:FORGEGRADLE_VERSION}'" |
+            Set-Content "build.gradle"
+
           $gradleArgs = @(
             "build",
             "-Pminecraft_version=${env:MINECRAFT_VERSION}",
