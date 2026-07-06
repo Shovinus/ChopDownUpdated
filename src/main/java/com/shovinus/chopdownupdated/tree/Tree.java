@@ -22,18 +22,23 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 public class Tree implements Runnable {
     BlockPos base;
     public ServerLevel world;
     public Player player;
     boolean main = false;
-    LinkedList<BlockPos> queue = new LinkedList<>();
-
     HashMap<BlockPos, Integer> estimatedTree = new HashMap<>();
+    PriorityQueue<BlockPos> queue = new PriorityQueue<>(new BuilderQueueComparer(estimatedTree));
     LinkedList<BlockPos> estimatedTreeQueue = new LinkedList<>();
     HashMap<BlockPos, TreeMovePair> fallingBlocks = new HashMap<>();
     LinkedList<BlockPos> fallingBlocksList = new LinkedList<>();
+    HashMap<BlockPos, String> blockNameCache = new HashMap<>();
+    HashMap<BlockPos, Boolean> logCache = new HashMap<>();
+    HashMap<BlockPos, Boolean> leafCache = new HashMap<>();
+    HashMap<BlockPos, Boolean> trunkCache = new HashMap<>();
+    HashMap<BlockPos, Boolean> draggableCache = new HashMap<>();
 
     int fallX = 1;
     int fallZ = 0;
@@ -108,7 +113,7 @@ public class Tree implements Runnable {
     }
 
     public boolean isLog(BlockPos pos) {
-        return isLog(blockName(pos, world));
+        return logCache.computeIfAbsent(pos, key -> isLog(blockName(key)));
     }
 
     private boolean isLog(String name) {
@@ -116,7 +121,7 @@ public class Tree implements Runnable {
     }
 
     public boolean isLeaf(BlockPos pos) {
-        return isLeaf(blockName(pos, world));
+        return leafCache.computeIfAbsent(pos, key -> isLeaf(blockName(key)));
     }
 
     private boolean isLeaf(String name) {
@@ -124,16 +129,14 @@ public class Tree implements Runnable {
     }
 
     private void getPossibleTree() throws Exception {
-        BuilderQueueComparer comp = new BuilderQueueComparer(estimatedTree);
         while (!queue.isEmpty()) {
-            Collections.sort(queue, comp);
-            BlockPos blockStep = queue.pollFirst();
+            BlockPos blockStep = queue.poll();
             for (int dy = -1; dy <= 1; ++dy) {
                 for (int dx = -1; dx <= 1; ++dx) {
                     for (int dz = -1; dz <= 1; ++dz) {
                         int stepInc = dz * dz + dx * dx + dy * dy;
                         BlockPos inspectPos = blockStep.offset(dx, dy, dz);
-                        String inspectedBlockName = blockName(inspectPos, world);
+                        String inspectedBlockName = blockName(inspectPos);
 
                         boolean log = isLog(inspectedBlockName);
                         boolean leaf = !log && isLeaf(inspectedBlockName);
@@ -143,7 +146,7 @@ public class Tree implements Runnable {
 
                         boolean logAbove = isLog(inspectPos.above());
                         int y = inspectPos.getY();
-                        boolean isTrunk = isTrunk(inspectPos, world, config);
+                        boolean isTrunk = isTrunk(inspectPos);
                         boolean yMatch = y == base.getY();
                         if (y > base.getY()) {
                             wentUp = true;
@@ -153,7 +156,7 @@ public class Tree implements Runnable {
                         leafStep = (leafStep == null ? 0 : leafStep) + (leaf ? stepInc : 0);
 
                         if (inspectPos.compareTo(base) == 0 || y < base.getY() || leafStep >= leafLimit
-                                || horizontalDistance(base, inspectPos) > radius) {
+                                || horizontalDistanceSquared(base, inspectPos) > radius * radius) {
                             continue;
                         }
 
@@ -179,13 +182,13 @@ public class Tree implements Runnable {
                             return;
                         }
 
-                        if (main && log && ((cantDrag(world, inspectPos, config) && !yMatch)
+                        if (main && log && ((cantDrag(inspectPos) && !yMatch)
                                 || (yMatch && logAbove && !wentUp)) && leafStep == 0) {
                             estimatedTree.clear();
                             queue.clear();
                             return;
                         }
-                        if (!yMatch || !cantDrag(world, inspectPos, config)) {
+                        if (!yMatch || !cantDrag(inspectPos)) {
                             addEstimateBlock(inspectPos, leafStep);
                         }
                     }
@@ -215,10 +218,9 @@ public class Tree implements Runnable {
         if (estimatedTree.containsKey(pos) && estimatedTree.get(pos) <= step) {
             return;
         }
-        if (!queue.contains(pos)) {
-            queue.add(pos);
-        }
         estimatedTree.put(pos, step);
+        queue.remove(pos);
+        queue.add(pos);
     }
 
     private Integer getEstimate(BlockPos pos) {
@@ -227,6 +229,10 @@ public class Tree implements Runnable {
 
     public static String blockName(BlockPos pos, ServerLevel world) {
         return registryName(BuiltInRegistries.BLOCK, world.getBlockState(pos).getBlock());
+    }
+
+    private String blockName(BlockPos pos) {
+        return blockNameCache.computeIfAbsent(pos, key -> blockName(key, world));
     }
 
     public static String stackName(ItemStack stack) {
@@ -258,8 +264,8 @@ public class Tree implements Runnable {
             BlockPos from = estimatedTreeQueue.pollFirst();
             boolean mine = true;
             int leafStep = estimatedTree.get(from);
-            double distance = horizontalDistance(base, from);
-            if (distance > config.Radius() || leafStep >= config.Leaf_limit()) {
+            int distance = horizontalDistanceSquared(base, from);
+            if (distance > config.Radius() * config.Radius() || leafStep >= config.Leaf_limit()) {
                 continue;
             }
             for (Tree otherTree : nearbyTrees) {
@@ -322,13 +328,13 @@ public class Tree implements Runnable {
         return fallingBlocksList.isEmpty();
     }
 
-    public boolean myBlock(BlockPos pos, double yourDistance, int yourStepValue) {
+    public boolean myBlock(BlockPos pos, int yourDistance, int yourStepValue) {
         Integer step = estimatedTree.get(pos);
         if (step == null || step > yourStepValue) {
             return false;
         }
         if (step == yourStepValue) {
-            return horizontalDistance(base, pos) < yourDistance;
+            return horizontalDistanceSquared(base, pos) < yourDistance;
         }
         return true;
     }
@@ -575,10 +581,10 @@ public class Tree implements Runnable {
         return method;
     }
 
-    private double horizontalDistance(BlockPos pos1, BlockPos pos2) {
+    private int horizontalDistanceSquared(BlockPos pos1, BlockPos pos2) {
         int diffX = Math.abs(pos1.getX() - pos2.getX());
         int diffZ = Math.abs(pos1.getZ() - pos2.getZ());
-        return Math.floor(Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffZ, 2)));
+        return diffX * diffX + diffZ * diffZ;
     }
 
     public static boolean isTrunk(BlockPos pos, ServerLevel world, TreeConfiguration config) {
@@ -614,10 +620,53 @@ public class Tree implements Runnable {
         return (1 + below + above) >= config.Min_vertical_logs();
     }
 
+    private boolean isTrunk(BlockPos pos) {
+        return trunkCache.computeIfAbsent(pos, this::calculateIsTrunk);
+    }
+
+    private boolean calculateIsTrunk(BlockPos pos) {
+        boolean log = true;
+        BlockPos inspect = pos;
+        while (log) {
+            inspect = inspect.below();
+            if (!isLog(inspect)) {
+                log = false;
+                if (!isDraggable(inspect)) {
+                    return true;
+                }
+            }
+        }
+
+        if (config.Min_vertical_logs() == 0) {
+            return false;
+        }
+        int below = 0;
+        for (int i = 1; i < config.Min_vertical_logs(); i++) {
+            if (!isLog(pos.below(i))) {
+                break;
+            }
+            below++;
+        }
+        int above = 0;
+        for (int i = 1; i < config.Min_vertical_logs(); i++) {
+            if (!isLog(pos.above(i))) {
+                break;
+            }
+            above++;
+        }
+        return (1 + below + above) >= config.Min_vertical_logs();
+    }
+
     private static boolean cantDrag(ServerLevel world, BlockPos pos, TreeConfiguration tree) {
         return !isDraggable(world, pos.east(), tree) || !isDraggable(world, pos.west(), tree)
                 || !isDraggable(world, pos.above(), tree) || !isDraggable(world, pos.below(), tree)
                 || !isDraggable(world, pos.south(), tree) || !isDraggable(world, pos.north(), tree);
+    }
+
+    private boolean cantDrag(BlockPos pos) {
+        return !isDraggable(pos.east()) || !isDraggable(pos.west())
+                || !isDraggable(pos.above()) || !isDraggable(pos.below())
+                || !isDraggable(pos.south()) || !isDraggable(pos.north());
     }
 
     private static boolean isDraggable(ServerLevel world, BlockPos pos, TreeConfiguration tree) {
@@ -635,6 +684,20 @@ public class Tree implements Runnable {
         return isWood(pos, world) || isLeaves(pos, world);
     }
 
+    private boolean isDraggable(BlockPos pos) {
+        return draggableCache.computeIfAbsent(pos, this::calculateIsDraggable);
+    }
+
+    private boolean calculateIsDraggable(BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        if (state.isAir() || state.getCollisionShape(world, pos, CollisionContext.empty()).isEmpty()) {
+            return true;
+        }
+
+        String name = blockName(pos);
+        return isLog(name) || isLeaf(name) || matchesAny(name, Config.logs) || matchesAny(name, Config.leaves);
+    }
+
     public boolean isAir(BlockPos pos) {
         return world.getBlockState(pos).isAir();
     }
@@ -645,25 +708,24 @@ public class Tree implements Runnable {
 
     public static boolean isWood(BlockPos pos, ServerLevel world) {
         String blockName = blockName(pos, world);
-        for (String block : Config.logs) {
-            if (block.equals(blockName) || blockName.matches(block)) {
-                return true;
-            }
-        }
-        return false;
+        return matchesAny(blockName, Config.logs);
     }
 
     public static boolean isLeaves(BlockPos pos, ServerLevel world) {
         String blockName = blockName(pos, world);
-        for (String block : Config.leaves) {
+        return matchesAny(blockName, Config.leaves);
+    }
+
+    public boolean isLeaves(BlockPos pos) {
+        return isLeaf(pos);
+    }
+
+    private static boolean matchesAny(String blockName, String[] blocks) {
+        for (String block : blocks) {
             if (block.equals(blockName) || blockName.matches(block)) {
                 return true;
             }
         }
         return false;
-    }
-
-    public boolean isLeaves(BlockPos pos) {
-        return isLeaves(pos, world);
     }
 }
