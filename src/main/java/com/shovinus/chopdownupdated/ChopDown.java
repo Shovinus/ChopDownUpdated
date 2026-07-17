@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -91,16 +92,18 @@ public class ChopDown {
         }
         try {
             tick++;
-            if (tick % 4 == 0) {
+            boolean throttledTick = tick % 4 == 0;
+            if (throttledTick) {
                 tick = 0;
-                Iterator<Tree> iterator = FALLING_TREES.iterator();
-                while (iterator.hasNext()) {
-                    Tree tree = iterator.next();
-                    if (tree.finishedCalculation && tree.dropBlocks()) {
-                        iterator.remove();
-                    } else if (tree.failedToBuild) {
-                        iterator.remove();
-                    }
+            }
+
+            Iterator<Tree> iterator = FALLING_TREES.iterator();
+            while (iterator.hasNext()) {
+                Tree tree = iterator.next();
+                if (tree.failedToBuild) {
+                    iterator.remove();
+                } else if (tree.finishedCalculation && (!tree.startedDropping || throttledTick) && tree.dropBlocks()) {
+                    iterator.remove();
                 }
             }
         } catch (Exception ex) {
@@ -113,13 +116,21 @@ public class ChopDown {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel world)) {
             return;
         }
-        if (Config.getPlayerConfig(player.getUUID()).showBlockName) {
+        if (Config.getPlayerConfig(playerId(player)).showBlockName) {
             BlockPos pos = event.getPos();
             player.sendSystemMessage(Component.literal("Block:" + Tree.blockName(pos, world)));
             if (!player.getMainHandItem().isEmpty()) {
                 player.sendSystemMessage(Component.literal("Tool:" + Tree.stackName(player.getMainHandItem())));
             }
             player.sendSystemMessage(Component.literal("Player Class:" + player.getClass().getName()));
+        }
+    }
+
+    public static UUID playerId(ServerPlayer player) {
+        try {
+            return (UUID) player.getClass().getMethod("getUUID").invoke(player);
+        } catch (ReflectiveOperationException ignored) {
+            return player.getGameProfile().getId();
         }
     }
 }

@@ -3,41 +3,62 @@ package com.shovinus.chopdownupdated.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.shovinus.chopdownupdated.ChopDown;
 import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class CDUCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("chopdownupdated")
-                .requires(source -> source.hasPermission(2));
+        LiteralArgumentBuilder<CommandSourceStack> root = literal("chopdownupdated")
+                .requires(CDUCommand::hasPermission);
 
         registerToggle(root, "makeGlass", cfg -> cfg.makeGlass, (cfg, value) -> cfg.makeGlass = value);
         registerToggle(root, "dontDrop", cfg -> cfg.dontFell, (cfg, value) -> cfg.dontFell = value);
         registerToggle(root, "showBlockName", cfg -> cfg.showBlockName, (cfg, value) -> cfg.showBlockName = value);
 
-        root.then(Commands.literal("breakLeaves")
+        root.then(literal("breakLeaves")
                 .executes(ctx -> setBreakLeaves(ctx.getSource(), !Config.breakLeaves))
-                .then(Commands.argument("value", BoolArgumentType.bool())
+                .then(argument("value")
                         .executes(ctx -> setBreakLeaves(ctx.getSource(), BoolArgumentType.getBool(ctx, "value")))));
 
         dispatcher.register(root);
-        dispatcher.register(Commands.literal("cdu").redirect(root.build()));
+        dispatcher.register(literal("cdu").redirect(root.build()));
     }
 
     private static void registerToggle(LiteralArgumentBuilder<CommandSourceStack> root, String name,
                                        Function<PersonalConfig, Boolean> getter,
                                        BiConsumer<PersonalConfig, Boolean> setter) {
-        root.then(Commands.literal(name)
+        root.then(literal(name)
                 .executes(ctx -> setPlayerValue(ctx.getSource(), name, getter, setter, null))
-                .then(Commands.argument("value", BoolArgumentType.bool())
+                .then(argument("value")
                         .executes(ctx -> setPlayerValue(ctx.getSource(), name, getter, setter, BoolArgumentType.getBool(ctx, "value")))));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> literal(String name) {
+        return LiteralArgumentBuilder.literal(name);
+    }
+
+    private static RequiredArgumentBuilder<CommandSourceStack, Boolean> argument(String name) {
+        return RequiredArgumentBuilder.argument(name, BoolArgumentType.bool());
+    }
+
+    private static boolean hasPermission(CommandSourceStack source) {
+        try {
+            Method method = source.getClass().getMethod("hasPermission", int.class);
+            return (Boolean) method.invoke(source, 2);
+        } catch (NoSuchMethodException ignored) {
+            return true;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
     }
 
     private static int setPlayerValue(CommandSourceStack source, String name,
@@ -50,7 +71,7 @@ public class CDUCommand {
         } catch (Exception ex) {
             return 0;
         }
-        PersonalConfig config = Config.getPlayerConfig(player.getUUID());
+        PersonalConfig config = Config.getPlayerConfig(ChopDown.playerId(player));
         boolean value = requestedValue == null ? !getter.apply(config) : requestedValue;
         setter.accept(config, value);
         source.sendSuccess(() -> Component.literal(name + (value ? " Enabled" : " Disabled")), false);
