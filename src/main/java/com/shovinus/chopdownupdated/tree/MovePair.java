@@ -50,29 +50,38 @@ class TreeMovePair {
             loadTileData(world, targetTile, tileEntityData);
             targetTile.setChanged();
         } catch (ReflectiveOperationException ex) {
-            // Tile entity APIs changed across 1.20.x; if copying fails, the block still moves.
+            // Block entity serialization changed in 1.20.5. A failed copy must not stop the tree move.
         }
     }
 
     private CompoundTag saveTileData(ServerLevel world) throws ReflectiveOperationException {
+        Method method = findMethod("saveWithoutMetadata");
+        return method.getParameterCount() == 0
+                ? (CompoundTag) method.invoke(tile)
+                : (CompoundTag) method.invoke(tile, world.registryAccess());
+    }
+
+    private void loadTileData(ServerLevel world, BlockEntity targetTile, CompoundTag data)
+            throws ReflectiveOperationException {
+        Method method;
         try {
-            Method method = BlockEntity.class.getMethod("saveWithoutMetadata");
-            return (CompoundTag) method.invoke(tile);
+            method = findMethod("load");
         } catch (NoSuchMethodException ex) {
-            Method method = BlockEntity.class.getMethod("saveWithoutMetadata", net.minecraft.core.HolderLookup.Provider.class);
-            return (CompoundTag) method.invoke(tile, world.registryAccess());
+            method = findMethod("loadWithComponents");
+        }
+        if (method.getParameterCount() == 1) {
+            method.invoke(targetTile, data);
+        } else {
+            method.invoke(targetTile, data, world.registryAccess());
         }
     }
 
-    private void loadTileData(ServerLevel world, BlockEntity targetTile, CompoundTag tileEntityData)
-            throws ReflectiveOperationException {
-        try {
-            Method method = BlockEntity.class.getMethod("load", CompoundTag.class);
-            method.invoke(targetTile, tileEntityData);
-        } catch (NoSuchMethodException ex) {
-            Method method = BlockEntity.class.getMethod("loadWithComponents", CompoundTag.class,
-                    net.minecraft.core.HolderLookup.Provider.class);
-            method.invoke(targetTile, tileEntityData, world.registryAccess());
+    private Method findMethod(String name) throws NoSuchMethodException {
+        for (Method method : BlockEntity.class.getMethods()) {
+            if (method.getName().equals(name)) {
+                return method;
+            }
         }
+        throw new NoSuchMethodException(name);
     }
 }

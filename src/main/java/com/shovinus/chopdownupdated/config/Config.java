@@ -53,17 +53,19 @@ public class Config {
         BREAK_LEAVES = builder.comment("Leaves break and drop instead of falling with the logs.")
                 .define("breakLeaves", false);
         SHARED_LEAVES = builder.comment("Extra block ids or regexes that should fall with attached trees.")
-                .defineListAllowEmpty("sharedLeaves", List.of("minecraft:bee_nest", "minecraft:beehive"), value -> value instanceof String);
+                .defineListAllowEmpty(List.of("sharedLeaves"),
+                        () -> List.of("minecraft:bee_nest", "minecraft:beehive"), value -> value instanceof String);
         ALLOWED_PLAYERS = builder.comment("Player implementation classes allowed to trigger tree falling.")
-                .defineListAllowEmpty("allowedPlayers", List.of("net.minecraft.server.level.ServerPlayer"), value -> value instanceof String);
+                .defineListAllowEmpty(List.of("allowedPlayers"),
+                        () -> List.of("net.minecraft.server.level.ServerPlayer"), value -> value instanceof String);
         IGNORE_TOOLS = builder.comment("Tool item ids or regexes that should not trigger Chop Down.")
-                .defineListAllowEmpty("ignoreTools", List.of(), value -> value instanceof String);
+                .defineListAllowEmpty(List.of("ignoreTools"), List::of, value -> value instanceof String);
         builder.pop();
 
         builder.push(MOD_CATEGORY);
         VANILLA = builder.comment("Vanilla Minecraft trees.").define("Vanilla", true);
         CUSTOM_TREES = builder.comment("Custom tree definitions as JSON TreeConfiguration objects.")
-                .defineListAllowEmpty("customTrees", List.of(), value -> value instanceof String);
+                .defineListAllowEmpty(List.of("customTrees"), List::of, value -> value instanceof String);
         builder.pop();
 
         SPEC = builder.build();

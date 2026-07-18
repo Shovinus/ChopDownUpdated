@@ -5,6 +5,7 @@ import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.PersonalConfig;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.FallingBlockEntity;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -55,8 +55,6 @@ public class Tree implements Runnable {
     public volatile boolean failedToBuild = false;
     public volatile boolean startedDropping = false;
     LinkedList<Tree> nearbyTrees = new LinkedList<>();
-    private static volatile Object blockRegistry;
-    private static volatile Object itemRegistry;
 
     public Tree(BlockPos pos, ServerLevel world) throws Exception {
         initTree(pos, world);
@@ -228,7 +226,7 @@ public class Tree implements Runnable {
     }
 
     public static String blockName(BlockPos pos, ServerLevel world) {
-        ResourceLocation loc = registryKey(blockRegistry(), world.getBlockState(pos).getBlock());
+        ResourceLocation loc = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
         return loc.toString();
     }
 
@@ -237,50 +235,8 @@ public class Tree implements Runnable {
     }
 
     public static String stackName(ItemStack stack) {
-        ResourceLocation loc = registryKey(itemRegistry(), stack.getItem());
+        ResourceLocation loc = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return loc.toString();
-    }
-
-    private static ResourceLocation registryKey(Object registry, Object value) {
-        try {
-            Class<?> registryClass = Class.forName("net.minecraft.core.Registry");
-            return (ResourceLocation) registryClass.getMethod("getKey", Object.class).invoke(registry, value);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Unable to resolve registry name for " + value, e);
-        }
-    }
-
-    private static Object blockRegistry() {
-        Object registry = blockRegistry;
-        if (registry == null) {
-            registry = builtInRegistry("BLOCK", "f_256975_");
-            blockRegistry = registry;
-        }
-        return registry;
-    }
-
-    private static Object itemRegistry() {
-        Object registry = itemRegistry;
-        if (registry == null) {
-            registry = builtInRegistry("ITEM", "f_256977_");
-            itemRegistry = registry;
-        }
-        return registry;
-    }
-
-    private static Object builtInRegistry(String namedField, String fallbackField) {
-        try {
-            Class<?> registries = Class.forName("net.minecraft.core.registries.BuiltInRegistries");
-            try {
-                Field field = registries.getField(namedField);
-                return field.get(null);
-            } catch (NoSuchFieldException ignored) {
-                Field field = registries.getField(fallbackField);
-                return field.get(null);
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Unable to access built-in registry " + namedField, e);
-        }
     }
 
     private void getRealisticTree() {
