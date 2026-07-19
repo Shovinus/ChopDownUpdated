@@ -2,22 +2,28 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Forge: Debug Client",
       "type": "java",
-      "request": "attach",
-      "hostName": "localhost",
-      "port": 5005,
-      "preLaunchTask": "Forge: Debug Client JVM",
-      "timeout": 120000
+      "name": "Fabric: Debug Client",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/run",
+      "console": "integratedTerminal",
+      "stopOnEntry": false,
+      "mainClass": "net.fabricmc.devlaunchinjector.Main",
+      "vmArgs": "-Dfabric.dli.config=${workspaceFolder}\\.gradle\\loom-cache\\launch.cfg -Dfabric.dli.env=client -Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient",
+      "args": "",
+      "projectName": "ChopDownUpdated"
     },
     {
-      "name": "Forge: Debug Server",
       "type": "java",
-      "request": "attach",
-      "hostName": "localhost",
-      "port": 5005,
-      "preLaunchTask": "Forge: Debug Server JVM",
-      "timeout": 120000
+      "name": "Fabric: Debug Server",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/run",
+      "console": "integratedTerminal",
+      "stopOnEntry": false,
+      "mainClass": "net.fabricmc.devlaunchinjector.Main",
+      "vmArgs": "-Dfabric.dli.config=${workspaceFolder}\\.gradle\\loom-cache\\launch.cfg -Dfabric.dli.env=server -Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotServer",
+      "args": "nogui",
+      "projectName": "ChopDownUpdated"
     }
   ]
 }

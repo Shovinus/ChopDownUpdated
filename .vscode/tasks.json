@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Forge: Run Client",
+      "label": "Fabric: Run Client",
       "type": "shell",
       "command": ".\\gradlew.bat",
       "args": ["runClient"],
@@ -10,13 +10,13 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
+          "JAVA_HOME": "C:\\Users\\baile\\.vscode\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64"
         }
       },
       "problemMatcher": []
     },
     {
-      "label": "Forge: Run Server",
+      "label": "Fabric: Run Server",
       "type": "shell",
       "command": ".\\gradlew.bat",
       "args": ["runServer"],
@@ -24,15 +24,16 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
+          "JAVA_HOME": "C:\\Users\\baile\\.vscode\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64"
         }
       },
       "problemMatcher": []
     },
     {
-      "label": "Forge: Build Jar",
+      "label": "Fabric: Build Jar",
       "type": "shell",
-      "command": ".\\gradlew.bat build",
+      "command": ".\\gradlew.bat",
+      "args": ["build"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -40,84 +41,10 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
+          "JAVA_HOME": "C:\\Users\\baile\\.vscode\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64"
         }
       },
       "problemMatcher": []
-    },
-    {
-      "label": "Forge: Build Jar 1.20.6",
-      "type": "shell",
-      "command": ".\\gradlew.bat \"-Pminecraft_version=1.20.6\" \"-Pforge_version=50.2.8\" \"-Pjava_toolchain_version=21\" build",
-      "group": "build",
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Forge: Test Compatibility 1.20.6",
-      "type": "shell",
-      "command": ".\\gradlew.bat \"-Pminecraft_version=1.20.6\" \"-Pforge_version=50.2.8\" \"-Pjava_toolchain_version=21\" build",
-      "group": "test",
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
-        }
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Forge: Debug Client JVM",
-      "type": "shell",
-      "command": ".\\gradlew.bat",
-      "args": ["runClient", "--debug-jvm"],
-      "isBackground": true,
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
-        }
-      },
-      "problemMatcher": {
-        "owner": "java",
-        "pattern": {
-          "regexp": "."
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "Listening for transport dt_socket at address: 5005",
-          "endsPattern": "Listening for transport dt_socket at address: 5005"
-        }
-      }
-    },
-    {
-      "label": "Forge: Debug Server JVM",
-      "type": "shell",
-      "command": ".\\gradlew.bat",
-      "args": ["runServer", "--debug-jvm"],
-      "isBackground": true,
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot"
-        }
-      },
-      "problemMatcher": {
-        "owner": "java",
-        "pattern": {
-          "regexp": "."
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "Listening for transport dt_socket at address: 5005",
-          "endsPattern": "Listening for transport dt_socket at address: 5005"
-        }
-      }
     }
   ]
 }
