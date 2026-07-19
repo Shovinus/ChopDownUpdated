@@ -45,6 +45,54 @@
         }
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Fabric: Debug Client JVM",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["runClient", "--debug-jvm", "--console=plain"],
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Users\\baile\\.vscode\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64"
+        }
+      },
+      "problemMatcher": {
+        "owner": "java",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Listening for transport dt_socket at address: 5005",
+          "endsPattern": "Listening for transport dt_socket at address: 5005"
+        }
+      }
+    },
+    {
+      "label": "Fabric: Debug Server JVM",
+      "type": "shell",
+      "command": ".\\gradlew.bat",
+      "args": ["runServer", "--debug-jvm", "--console=plain"],
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Users\\baile\\.vscode\\extensions\\redhat.java-1.55.0-win32-x64\\jre\\21.0.11-win32-x86_64"
+        }
+      },
+      "problemMatcher": {
+        "owner": "java",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Listening for transport dt_socket at address: 5005",
+          "endsPattern": "Listening for transport dt_socket at address: 5005"
+        }
+      }
     }
   ]
 }
