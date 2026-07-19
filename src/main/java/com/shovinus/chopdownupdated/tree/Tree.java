@@ -6,7 +6,7 @@ import com.shovinus.chopdownupdated.config.PersonalConfig;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -226,7 +226,7 @@ public class Tree implements Runnable {
     }
 
     public static String blockName(BlockPos pos, ServerLevel world) {
-        ResourceLocation loc = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
+        Identifier loc = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
         return loc.toString();
     }
 
@@ -235,7 +235,7 @@ public class Tree implements Runnable {
     }
 
     public static String stackName(ItemStack stack) {
-        ResourceLocation loc = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        Identifier loc = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return loc.toString();
     }
 
@@ -457,7 +457,7 @@ public class Tree implements Runnable {
 
     private void clearLeafLandingPath(TreeMovePair pair) {
         BlockPos below = pair.to.below();
-        while (below.getY() > world.getMinBuildHeight()) {
+        while (below.getY() > world.getMinY()) {
             boolean cleared = false;
             if (Tree.isLeaves(below, world)) {
                 dropDrops(below, below, world.getBlockState(below), world);
@@ -542,7 +542,7 @@ public class Tree implements Runnable {
     }
 
     private boolean canMoveTo(BlockPos pos, boolean log) {
-        return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > world.getMinBuildHeight();
+        return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > world.getMinY();
     }
 
     private int horizontalDistanceSquared(BlockPos pos1, BlockPos pos2) {

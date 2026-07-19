@@ -1,8 +1,9 @@
 plugins {
+    id 'java'
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'net.minecraftforge.gradle' version '[7.0.3,8)'
 }
 
 version = "${minecraft_version_compat}-${mod_version}"
@@ -23,9 +24,7 @@ minecraft {
 
     runs {
         configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
+            workingDir = layout.projectDirectory.dir('run')
             mods {
                 chopdownupdated {
                     source sourceSets.main
@@ -33,18 +32,23 @@ minecraft {
             }
         }
 
-        client {}
-        server {
+        register('client')
+        register('server') {
             args '--nogui'
         }
     }
 }
 
 repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -59,8 +63,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_license            : mod_license,
             mod_version            : mod_version,
             mod_authors            : mod_authors,
-            mod_description        : mod_description,
-            pack_format            : pack_format
+            mod_description        : mod_description
     ]
     inputs.properties replaceProperties
 

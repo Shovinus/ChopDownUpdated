@@ -9,14 +9,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.Result;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +38,8 @@ public class ChopDown {
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private static int tick = 0;
 
-    public ChopDown() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    public ChopDown(FMLJavaModLoadingContext context) {
+        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -71,7 +72,7 @@ public class ChopDown {
         for (Tree tree : FALLING_TREES) {
             if (tree.player == player) {
                 player.sendSystemMessage(Component.literal("Still chopping down the last tree"));
-                event.setCanceled(true);
+                event.setResult(Result.DENY);
                 return;
             }
         }
@@ -86,10 +87,7 @@ public class ChopDown {
     }
 
     @SubscribeEvent
-    public void onTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    public void onTick(TickEvent.ServerTickEvent.Post event) {
         try {
             tick++;
             boolean throttledTick = tick % 4 == 0;
@@ -130,7 +128,7 @@ public class ChopDown {
         try {
             return (UUID) player.getClass().getMethod("getUUID").invoke(player);
         } catch (ReflectiveOperationException ignored) {
-            return player.getGameProfile().getId();
+            return player.getGameProfile().id();
         }
     }
 }
