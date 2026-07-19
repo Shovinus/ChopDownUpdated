@@ -1,77 +1,46 @@
 plugins {
-    id 'java'
-    id 'eclipse'
-    id 'idea'
+    id 'fabric-loom' version "${loom_version}"
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '[7.0.3,8)'
 }
 
-version = "${minecraft_version_compat}-${mod_version}"
-group = "${group_name}"
-
-if (findProperty('build_directory')) {
-    layout.buildDirectory = file(findProperty('build_directory'))
-}
+version = "${minecraft_version}-${mod_version}"
+group = group_name
 
 base {
-    archivesName = "${mod_id}"
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of((findProperty('java_toolchain_version') ?: '17') as int)
-
-minecraft {
-    mappings channel: 'official', version: minecraft_version
-
-    runs {
-        configureEach {
-            workingDir = layout.projectDirectory.dir('run')
-            mods {
-                chopdownupdated {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        register('client')
-        register('server') {
-            args '--nogui'
-        }
-    }
+    archivesName = "${mod_id}-fabric"
 }
 
 repositories {
-    minecraft.mavenizer(it)
-    maven fg.forgeMaven
-    maven fg.minecraftLibsMaven
-    mavenCentral()
 }
 
 dependencies {
-    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
-    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 }
 
-tasks.named('processResources', ProcessResources).configure {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            forge_version          : forge_version,
-            forge_version_range    : forge_version_range,
-            loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-            mod_authors            : mod_authors,
-            mod_description        : mod_description
-    ]
-    inputs.properties replaceProperties
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', minecraft_version
+    inputs.property 'loader_version', loader_version
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
+    filesMatching('fabric.mod.json') {
+        expand(
+                version: project.version,
+                minecraft_version: minecraft_version,
+                loader_version: loader_version
+        )
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
 }

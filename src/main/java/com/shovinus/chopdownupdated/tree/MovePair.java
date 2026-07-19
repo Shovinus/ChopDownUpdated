@@ -6,8 +6,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.lang.reflect.Method;
-
 class TreeMovePair {
     public BlockPos to;
     public BlockPos from;
@@ -34,54 +32,20 @@ class TreeMovePair {
         }
         world.setBlock(to, state, 3);
         if (tile != null) {
-            BlockEntity targetTile = world.getBlockEntity(to);
-            if (targetTile != null) {
-                copyTileData(world, targetTile);
-            }
+            copyTileData(world);
         }
     }
 
-    private void copyTileData(ServerLevel world, BlockEntity targetTile) {
+    private void copyTileData(ServerLevel world) {
         try {
-            CompoundTag tileEntityData = saveTileData(world);
-            tileEntityData.remove("x");
-            tileEntityData.remove("y");
-            tileEntityData.remove("z");
-            loadTileData(world, targetTile, tileEntityData);
-            targetTile.setChanged();
-        } catch (ReflectiveOperationException ex) {
-            // Block entity serialization changed in 1.20.5. A failed copy must not stop the tree move.
-        }
-    }
-
-    private CompoundTag saveTileData(ServerLevel world) throws ReflectiveOperationException {
-        Method method = findMethod("saveWithoutMetadata");
-        return method.getParameterCount() == 0
-                ? (CompoundTag) method.invoke(tile)
-                : (CompoundTag) method.invoke(tile, world.registryAccess());
-    }
-
-    private void loadTileData(ServerLevel world, BlockEntity targetTile, CompoundTag data)
-            throws ReflectiveOperationException {
-        Method method;
-        try {
-            method = findMethod("load");
-        } catch (NoSuchMethodException ex) {
-            method = findMethod("loadWithComponents");
-        }
-        if (method.getParameterCount() == 1) {
-            method.invoke(targetTile, data);
-        } else {
-            method.invoke(targetTile, data, world.registryAccess());
-        }
-    }
-
-    private Method findMethod(String name) throws NoSuchMethodException {
-        for (Method method : BlockEntity.class.getMethods()) {
-            if (method.getName().equals(name)) {
-                return method;
+            CompoundTag data = tile.saveWithFullMetadata(world.registryAccess());
+            BlockEntity movedTile = BlockEntity.loadStatic(to, state, data, world.registryAccess());
+            if (movedTile != null) {
+                world.setBlockEntity(movedTile);
+                movedTile.setChanged();
             }
+        } catch (RuntimeException ex) {
+            // A failed block entity copy must not stop the rest of the tree move.
         }
-        throw new NoSuchMethodException(name);
     }
 }

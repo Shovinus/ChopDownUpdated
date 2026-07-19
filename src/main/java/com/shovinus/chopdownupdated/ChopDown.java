@@ -4,20 +4,17 @@ import com.shovinus.chopdownupdated.command.CDUCommand;
 import com.shovinus.chopdownupdated.config.Config;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import com.shovinus.chopdownupdated.tree.Tree;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.Result;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraft.world.InteractionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@Mod(ChopDown.MODID)
-public class ChopDown {
+public class ChopDown implements ModInitializer {
     public static final String MODID = "chopdownupdated";
     public static final String MODNAME = "ChopDownUpdated";
     public static final String AUTHOR = "Shovinus";
@@ -38,56 +34,59 @@ public class ChopDown {
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private static int tick = 0;
 
-    public ChopDown(FMLJavaModLoadingContext context) {
-        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        MinecraftForge.EVENT_BUS.register(this);
+    @Override
+    public void onInitialize() {
+        Config.initialize();
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+                CDUCommand.register(dispatcher));
+        PlayerBlockBreakEvents.BEFORE.register(this::onBlockBreak);
+        ServerTickEvents.END_SERVER_TICK.register(this::onTick);
+        AttackBlockCallback.EVENT.register(this::clickBlock);
     }
 
-    @SubscribeEvent
-    public void onCommandRegister(RegisterCommandsEvent event) {
-        CDUCommand.register(event.getDispatcher());
-    }
-
-    @SubscribeEvent
-    public void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel world) || !(event.getPlayer() instanceof ServerPlayer player)) {
-            return;
+    private boolean onBlockBreak(net.minecraft.world.level.Level world, net.minecraft.world.entity.player.Player sourcePlayer,
+                                 BlockPos pos, net.minecraft.world.level.block.state.BlockState state,
+                                 net.minecraft.world.level.block.entity.BlockEntity blockEntity) {
+        if (!(world instanceof ServerLevel serverWorld) || !(sourcePlayer instanceof ServerPlayer player)) {
+            return true;
         }
-
-        BlockPos pos = event.getPos();
-        if (!Tree.isWood(pos, world) || !Config.allowedPlayers.contains(player.getClass().getName())) {
-            return;
+        if (!Tree.isWood(pos, serverWorld) || !isAllowedPlayer(player)) {
+            return true;
         }
         if (!player.getMainHandItem().isEmpty() && Config.MatchesTool(Tree.stackName(player.getMainHandItem()))) {
-            return;
+            return true;
         }
 
-        TreeConfiguration config = Tree.findConfig(world, pos);
+        TreeConfiguration config = Tree.findConfig(serverWorld, pos);
         BlockPos playerStanding = player.blockPosition();
-        if (config == null || !Tree.isTrunk(pos, world, config) || !Tree.isWood(pos.above(), world)
+        if (config == null || !Tree.isTrunk(pos, serverWorld, config) || !Tree.isWood(pos.above(), serverWorld)
                 || (playerStanding.getX() == 0 && playerStanding.getZ() == 0)) {
-            return;
+            return true;
         }
 
         for (Tree tree : FALLING_TREES) {
             if (tree.player == player) {
                 player.sendSystemMessage(Component.literal("Still chopping down the last tree"));
-                event.setResult(Result.DENY);
-                return;
+                return false;
             }
         }
 
         try {
-            Tree tree = new Tree(pos, world, player);
+            Tree tree = new Tree(pos, serverWorld, player);
             FALLING_TREES.add(tree);
             executor.submit(tree);
-        } catch (Exception e) {
+        } catch (Exception ex) {
             player.sendSystemMessage(Component.literal("Can't find a tree configuration for this log."));
         }
+        return true;
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent.ServerTickEvent.Post event) {
+    private static boolean isAllowedPlayer(ServerPlayer player) {
+        return Config.allowedPlayers.contains(player.getClass().getName())
+                || Config.allowedPlayers.contains("net.minecraft.server.level.ServerPlayer");
+    }
+
+    private void onTick(MinecraftServer server) {
         try {
             tick++;
             boolean throttledTick = tick % 4 == 0;
@@ -109,26 +108,22 @@ public class ChopDown {
         }
     }
 
-    @SubscribeEvent
-    public void clickBlock(PlayerInteractEvent.LeftClickBlock event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel world)) {
-            return;
-        }
-        if (Config.getPlayerConfig(playerId(player)).showBlockName) {
-            BlockPos pos = event.getPos();
-            player.sendSystemMessage(Component.literal("Block:" + Tree.blockName(pos, world)));
+    private InteractionResult clickBlock(net.minecraft.world.entity.player.Player sourcePlayer,
+                                         net.minecraft.world.level.Level world,
+                                         net.minecraft.world.InteractionHand hand, BlockPos pos,
+                                         net.minecraft.core.Direction direction) {
+        if (sourcePlayer instanceof ServerPlayer player && world instanceof ServerLevel serverWorld
+                && Config.getPlayerConfig(playerId(player)).showBlockName) {
+            player.sendSystemMessage(Component.literal("Block:" + Tree.blockName(pos, serverWorld)));
             if (!player.getMainHandItem().isEmpty()) {
                 player.sendSystemMessage(Component.literal("Tool:" + Tree.stackName(player.getMainHandItem())));
             }
             player.sendSystemMessage(Component.literal("Player Class:" + player.getClass().getName()));
         }
+        return InteractionResult.PASS;
     }
 
     public static UUID playerId(ServerPlayer player) {
-        try {
-            return (UUID) player.getClass().getMethod("getUUID").invoke(player);
-        } catch (ReflectiveOperationException ignored) {
-            return player.getGameProfile().id();
-        }
+        return player.getUUID();
     }
 }

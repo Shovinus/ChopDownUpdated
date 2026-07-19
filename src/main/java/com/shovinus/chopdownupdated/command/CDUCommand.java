@@ -10,8 +10,8 @@ import com.shovinus.chopdownupdated.config.PersonalConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 
-import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -51,14 +51,7 @@ public class CDUCommand {
     }
 
     private static boolean hasPermission(CommandSourceStack source) {
-        try {
-            Method method = source.getClass().getMethod("hasPermission", int.class);
-            return (Boolean) method.invoke(source, 2);
-        } catch (NoSuchMethodException ignored) {
-            return true;
-        } catch (ReflectiveOperationException ignored) {
-            return false;
-        }
+        return source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
     }
 
     private static int setPlayerValue(CommandSourceStack source, String name,

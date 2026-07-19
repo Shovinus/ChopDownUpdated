@@ -348,7 +348,7 @@ public class Tree implements Runnable {
             }
         }
         if (foundProp == null) {
-            return state.rotate(world, base, Rotation.CLOCKWISE_90);
+            return state.rotate(Rotation.CLOCKWISE_90);
         }
         if (axis == EnumFallAxis.X) {
             if (isAxis(state, foundProp, "Y")) {

@@ -1,21 +1,23 @@
 package com.shovinus.chopdownupdated.config;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.shovinus.chopdownupdated.ChopDown;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.fabricmc.loader.api.FabricLoader;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = ChopDown.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
-    public static final String CATEGORY = "General";
-    public static final String MOD_CATEGORY = "Mod Compatibility";
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("chopdownupdated.json");
 
     public static boolean breakLeaves;
     public static int maxDropsPerTickPerTree;
@@ -26,49 +28,26 @@ public class Config {
 
     public static final HashMap<UUID, PersonalConfig> playerConfigs = new HashMap<>();
     public static TreeConfiguration[] treeConfigurations = new TreeConfiguration[0];
-
     public static String[] leaves = new String[0];
     public static String[] logs = new String[0];
-
     public static ModTreeConfigurations mods = new ModTreeConfigurations();
 
-    public static final ForgeConfigSpec SPEC;
-    private static final ForgeConfigSpec.IntValue MAX_DROPS_PER_TICK_PER_TREE;
-    private static final ForgeConfigSpec.IntValue MAX_FALLING_BLOCK_BEFORE_MANUAL_MOVE;
-    private static final ForgeConfigSpec.BooleanValue BREAK_LEAVES;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHARED_LEAVES;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> ALLOWED_PLAYERS;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> IGNORE_TOOLS;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> CUSTOM_TREES;
-    private static final ForgeConfigSpec.BooleanValue VANILLA;
+    private static ConfigData data = new ConfigData();
 
-    static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-
-        builder.push(CATEGORY);
-        MAX_DROPS_PER_TICK_PER_TREE = builder.comment("Maximum number of blocks to drop per tick for each falling tree.")
-                .defineInRange("maxDropsPerTickPerTree", 150, 1, 1_000_000);
-        MAX_FALLING_BLOCK_BEFORE_MANUAL_MOVE = builder.comment("Trees above this block count are placed directly instead of spawned as falling entities.")
-                .defineInRange("maxFallingBlockBeforeManualMove", 1500, 1, 1_000_000);
-        BREAK_LEAVES = builder.comment("Leaves break and drop instead of falling with the logs.")
-                .define("breakLeaves", false);
-        SHARED_LEAVES = builder.comment("Extra block ids or regexes that should fall with attached trees.")
-                .defineListAllowEmpty(List.of("sharedLeaves"),
-                        () -> List.of("minecraft:bee_nest", "minecraft:beehive"), value -> value instanceof String);
-        ALLOWED_PLAYERS = builder.comment("Player implementation classes allowed to trigger tree falling.")
-                .defineListAllowEmpty(List.of("allowedPlayers"),
-                        () -> List.of("net.minecraft.server.level.ServerPlayer"), value -> value instanceof String);
-        IGNORE_TOOLS = builder.comment("Tool item ids or regexes that should not trigger Chop Down.")
-                .defineListAllowEmpty(List.of("ignoreTools"), List::of, value -> value instanceof String);
-        builder.pop();
-
-        builder.push(MOD_CATEGORY);
-        VANILLA = builder.comment("Vanilla Minecraft trees.").define("Vanilla", true);
-        CUSTOM_TREES = builder.comment("Custom tree definitions as JSON TreeConfiguration objects.")
-                .defineListAllowEmpty(List.of("customTrees"), List::of, value -> value instanceof String);
-        builder.pop();
-
-        SPEC = builder.build();
+    public static void initialize() {
+        if (Files.exists(CONFIG_PATH)) {
+            try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
+                ConfigData loaded = GSON.fromJson(reader, ConfigData.class);
+                if (loaded != null) {
+                    data = loaded;
+                }
+            } catch (Exception ex) {
+                ChopDown.LOGGER.error("Unable to read {}; using defaults", CONFIG_PATH, ex);
+            }
+        } else {
+            save();
+        }
+        reloadConfig();
     }
 
     public static PersonalConfig getPlayerConfig(UUID player) {
@@ -76,23 +55,28 @@ public class Config {
     }
 
     public static void reloadConfig() {
-        maxDropsPerTickPerTree = MAX_DROPS_PER_TICK_PER_TREE.get();
-        maxFallingBlockBeforeManualMove = MAX_FALLING_BLOCK_BEFORE_MANUAL_MOVE.get();
-        breakLeaves = BREAK_LEAVES.get();
-        sharedLeaves = SHARED_LEAVES.get();
-        allowedPlayers = ALLOWED_PLAYERS.get();
-        ignoreTools = IGNORE_TOOLS.get();
+        data.validate();
+        maxDropsPerTickPerTree = data.maxDropsPerTickPerTree;
+        maxFallingBlockBeforeManualMove = data.maxFallingBlockBeforeManualMove;
+        breakLeaves = data.breakLeaves;
+        sharedLeaves = List.copyOf(data.sharedLeaves);
+        allowedPlayers = List.copyOf(data.allowedPlayers);
+        ignoreTools = List.copyOf(data.ignoreTools);
 
         List<String> activeMods = new ArrayList<>();
-        if (VANILLA.get()) {
+        if (data.vanilla) {
             activeMods.add("Vanilla");
         }
 
-        List<TreeConfiguration> tempTreeConfigurations = new ArrayList<>();
-        for (String treeConfig : CUSTOM_TREES.get()) {
-            tempTreeConfigurations.add(new Gson().fromJson(treeConfig, TreeConfiguration.class));
+        List<TreeConfiguration> customTrees = new ArrayList<>();
+        for (String treeConfig : data.customTrees) {
+            try {
+                customTrees.add(GSON.fromJson(treeConfig, TreeConfiguration.class));
+            } catch (Exception ex) {
+                ChopDown.LOGGER.warn("Ignoring invalid custom tree configuration", ex);
+            }
         }
-        mods.setCustomTrees(tempTreeConfigurations.toArray(new TreeConfiguration[0]));
+        mods.setCustomTrees(customTrees.toArray(new TreeConfiguration[0]));
 
         try {
             mods.ActivateMods(ConvertListToArray(activeMods));
@@ -150,19 +134,43 @@ public class Config {
     }
 
     public static void setBreakLeaves(boolean value) {
-        BREAK_LEAVES.set(value);
-        BREAK_LEAVES.save();
+        data.breakLeaves = value;
+        save();
         reloadConfig();
     }
 
-    @SubscribeEvent
-    public static void onConfigLoad(ModConfigEvent event) {
-        if (event.getConfig().getSpec() == SPEC) {
-            reloadConfig();
+    private static void save() {
+        try {
+            Files.createDirectories(CONFIG_PATH.getParent());
+            try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
+                GSON.toJson(data, writer);
+            }
+        } catch (IOException ex) {
+            ChopDown.LOGGER.error("Unable to save {}", CONFIG_PATH, ex);
         }
     }
 
     public static String[] ConvertListToArray(List<String> list) {
         return list.toArray(new String[0]);
+    }
+
+    private static final class ConfigData {
+        int maxDropsPerTickPerTree = 150;
+        int maxFallingBlockBeforeManualMove = 1500;
+        boolean breakLeaves = false;
+        List<String> sharedLeaves = new ArrayList<>(List.of("minecraft:bee_nest", "minecraft:beehive"));
+        List<String> allowedPlayers = new ArrayList<>(List.of("net.minecraft.server.level.ServerPlayer"));
+        List<String> ignoreTools = new ArrayList<>();
+        boolean vanilla = true;
+        List<String> customTrees = new ArrayList<>();
+
+        void validate() {
+            maxDropsPerTickPerTree = Math.max(1, maxDropsPerTickPerTree);
+            maxFallingBlockBeforeManualMove = Math.max(1, maxFallingBlockBeforeManualMove);
+            if (sharedLeaves == null) sharedLeaves = new ArrayList<>();
+            if (allowedPlayers == null) allowedPlayers = new ArrayList<>();
+            if (ignoreTools == null) ignoreTools = new ArrayList<>();
+            if (customTrees == null) customTrees = new ArrayList<>();
+        }
     }
 }
