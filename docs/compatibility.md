@@ -23,8 +23,11 @@ The server config is written to `config/chopdownupdated.json` on first launch.
 ## Cross-version test matrix
 
 Use the `Fabric: Debug Client (select version)` or `Fabric: Debug Server (select version)` entry in
-VS Code's Run and Debug panel to select any release from 1.21 through 1.21.10. The matching Fabric API
+VS Code's Run and Debug panel to select any release from 1.21.2 through 1.21.10. The matching Fabric API
 is selected automatically.
+
+Gameplay testing confirms that this source version works from Minecraft 1.21.2 through 1.21.10.
+Minecraft 1.21 and 1.21.1 are maintained on the separate `fabric-1.21.1` branch.
 
 Run the complete compile matrix from PowerShell with:
 
