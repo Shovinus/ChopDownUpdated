@@ -6,7 +6,7 @@ import com.shovinus.chopdownupdated.config.PersonalConfig;
 import com.shovinus.chopdownupdated.config.TreeConfiguration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -226,7 +226,7 @@ public class Tree implements Runnable {
     }
 
     public static String blockName(BlockPos pos, ServerLevel world) {
-        Identifier loc = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
+        ResourceLocation loc = BuiltInRegistries.BLOCK.getKey(world.getBlockState(pos).getBlock());
         return loc.toString();
     }
 
@@ -235,7 +235,7 @@ public class Tree implements Runnable {
     }
 
     public static String stackName(ItemStack stack) {
-        Identifier loc = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation loc = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return loc.toString();
     }
 

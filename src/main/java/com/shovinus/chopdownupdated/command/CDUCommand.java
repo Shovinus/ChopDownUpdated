@@ -10,7 +10,6 @@ import com.shovinus.chopdownupdated.config.PersonalConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.Permissions;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -51,7 +50,7 @@ public class CDUCommand {
     }
 
     private static boolean hasPermission(CommandSourceStack source) {
-        return source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
+        return source.hasPermission(2);
     }
 
     private static int setPlayerValue(CommandSourceStack source, String name,
