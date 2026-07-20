@@ -11,7 +11,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -51,14 +50,7 @@ public class CDUCommand {
     }
 
     private static boolean hasPermission(CommandSourceStack source) {
-        try {
-            Method method = source.getClass().getMethod("hasPermission", int.class);
-            return (Boolean) method.invoke(source, 2);
-        } catch (NoSuchMethodException ignored) {
-            return true;
-        } catch (ReflectiveOperationException ignored) {
-            return false;
-        }
+        return source.hasPermission(2);
     }
 
     private static int setPlayerValue(CommandSourceStack source, String name,

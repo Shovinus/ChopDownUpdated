@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Forge: Debug Client",
+      "name": "Forge: Debug Client (select version)",
       "type": "java",
       "request": "attach",
       "hostName": "localhost",
@@ -11,13 +11,22 @@
       "timeout": 120000
     },
     {
-      "name": "Forge: Debug Server",
+      "name": "Forge: Debug Server (select version)",
       "type": "java",
       "request": "attach",
       "hostName": "localhost",
       "port": 5005,
       "preLaunchTask": "Forge: Debug Server JVM",
       "timeout": 120000
+    }
+  ],
+  "inputs": [
+    {
+      "id": "minecraftVersion",
+      "type": "pickString",
+      "description": "Minecraft version to test (Forge has no 1.21.2 release)",
+      "default": "1.21.10",
+      "options": ["1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10"]
     }
   ]
 }
