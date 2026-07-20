@@ -9,12 +9,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.Result;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -26,6 +24,7 @@ import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 @Mod(ChopDown.MODID)
 public class ChopDown {
@@ -40,15 +39,17 @@ public class ChopDown {
 
     public ChopDown(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-        MinecraftForge.EVENT_BUS.register(this);
+        Config.registerReloadListener(context);
+        registerForgeListener(RegisterCommandsEvent.class, event -> onCommandRegister((RegisterCommandsEvent) event));
+        registerForgeListener(BlockEvent.BreakEvent.class, event -> onBlockBreak((BlockEvent.BreakEvent) event));
+        registerForgeListener(TickEvent.ServerTickEvent.Post.class, event -> onTick((TickEvent.ServerTickEvent.Post) event));
+        registerForgeListener(PlayerInteractEvent.LeftClickBlock.class, event -> clickBlock((PlayerInteractEvent.LeftClickBlock) event));
     }
 
-    @SubscribeEvent
     public void onCommandRegister(RegisterCommandsEvent event) {
         CDUCommand.register(event.getDispatcher());
     }
 
-    @SubscribeEvent
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!(event.getLevel() instanceof ServerLevel world) || !(event.getPlayer() instanceof ServerPlayer player)) {
             return;
@@ -72,7 +73,7 @@ public class ChopDown {
         for (Tree tree : FALLING_TREES) {
             if (tree.player == player) {
                 player.sendSystemMessage(Component.literal("Still chopping down the last tree"));
-                event.setResult(Result.DENY);
+                cancelEvent(event);
                 return;
             }
         }
@@ -86,7 +87,6 @@ public class ChopDown {
         }
     }
 
-    @SubscribeEvent
     public void onTick(TickEvent.ServerTickEvent.Post event) {
         try {
             tick++;
@@ -109,7 +109,6 @@ public class ChopDown {
         }
     }
 
-    @SubscribeEvent
     public void clickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel world)) {
             return;
@@ -128,7 +127,55 @@ public class ChopDown {
         try {
             return (UUID) player.getClass().getMethod("getUUID").invoke(player);
         } catch (ReflectiveOperationException ignored) {
-            return player.getGameProfile().id();
+            try {
+                return (UUID) player.getGameProfile().getClass().getMethod("id").invoke(player.getGameProfile());
+            } catch (ReflectiveOperationException accessorMissing) {
+                try {
+                    return (UUID) player.getGameProfile().getClass().getMethod("getId").invoke(player.getGameProfile());
+                } catch (ReflectiveOperationException ex) {
+                    throw new IllegalStateException("Unable to read the player's UUID", ex);
+                }
+            }
+        }
+    }
+
+    private static void registerForgeListener(Class<?> eventClass, Consumer<Object> listener) {
+        try {
+            // EventBus 7 (Forge 60) exposes a typed static bus on each event class.
+            Object eventBus = eventClass.getField("BUS").get(null);
+            eventBus.getClass().getMethod("addListener", Consumer.class).invoke(eventBus, listener);
+        } catch (NoSuchFieldException newApiMissing) {
+            try {
+                // EventBus 6 (Forge 53-59) uses the global Forge event bus.
+                Object eventBus = MinecraftForge.EVENT_BUS;
+                Class<?> priorityClass = Class.forName("net.minecraftforge.eventbus.api.EventPriority");
+                @SuppressWarnings({"rawtypes", "unchecked"})
+                Object normalPriority = Enum.valueOf((Class<? extends Enum>) priorityClass.asSubclass(Enum.class), "NORMAL");
+                eventBus.getClass().getMethod("addListener", priorityClass, boolean.class, Class.class, Consumer.class)
+                        .invoke(eventBus, normalPriority, false, eventClass, listener);
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException("Unable to register Forge listener for " + eventClass.getName(), ex);
+            }
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Unable to register Forge listener for " + eventClass.getName(), ex);
+        }
+    }
+
+    private static void cancelEvent(BlockEvent.BreakEvent event) {
+        try {
+            // EventBus 6 cancellation API.
+            event.getClass().getMethod("setCanceled", boolean.class).invoke(event, true);
+        } catch (NoSuchMethodException oldApiMissing) {
+            try {
+                // EventBus 7 result API.
+                Class<?> resultClass = Class.forName("net.minecraftforge.common.util.Result");
+                Object deny = resultClass.getField("DENY").get(null);
+                event.getClass().getMethod("setResult", resultClass).invoke(event, deny);
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException("Unable to cancel the block break event", ex);
+            }
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Unable to cancel the block break event", ex);
         }
     }
 }

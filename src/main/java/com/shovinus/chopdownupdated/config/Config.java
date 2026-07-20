@@ -1,18 +1,18 @@
 package com.shovinus.chopdownupdated.config;
 
-import com.google.gson.Gson;
-import com.shovinus.chopdownupdated.ChopDown;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber(modid = ChopDown.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+import com.google.gson.Gson;
+import com.shovinus.chopdownupdated.ChopDown;
+
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+
 public class Config {
     public static final String CATEGORY = "General";
     public static final String MOD_CATEGORY = "Mod Compatibility";
@@ -155,10 +155,32 @@ public class Config {
         reloadConfig();
     }
 
-    @SubscribeEvent
     public static void onConfigLoad(ModConfigEvent event) {
         if (event.getConfig().getSpec() == SPEC) {
             reloadConfig();
+        }
+    }
+
+    public static void registerReloadListener(FMLJavaModLoadingContext context) {
+        Consumer<ModConfigEvent> listener = Config::onConfigLoad;
+        try {
+            // Forge 53-59 exposes the mod event bus directly.
+            Object modBus = context.getClass().getMethod("getModEventBus").invoke(context);
+            modBus.getClass().getMethod("addListener", Consumer.class).invoke(modBus, listener);
+        } catch (NoSuchMethodException oldApiMissing) {
+            try {
+                // Forge 60 groups typed event buses instead.
+                Object group = context.getClass().getMethod("getModBusGroup").invoke(context);
+                Class<?> busGroupClass = Class.forName("net.minecraftforge.eventbus.api.bus.BusGroup");
+                Class<?> eventBusClass = Class.forName("net.minecraftforge.eventbus.api.bus.EventBus");
+                Object configBus = eventBusClass.getMethod("create", busGroupClass, Class.class)
+                        .invoke(null, group, ModConfigEvent.class);
+                eventBusClass.getMethod("addListener", Consumer.class).invoke(configBus, listener);
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException("Unable to register the Forge config reload listener", ex);
+            }
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Unable to register the Forge config reload listener", ex);
         }
     }
 
