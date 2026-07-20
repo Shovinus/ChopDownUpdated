@@ -19,17 +19,16 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of((findProperty('java_toolchain_version') ?: '17') as int)
 
+// Forge 60 scans development classpath roots as individual mod containers. Keep the
+// @Mod classes and generated mods.toml together so runClient/runServer can discover both.
+sourceSets.main.output.resourcesDir = sourceSets.main.java.classesDirectory.get().asFile
+
 minecraft {
     mappings channel: 'official', version: minecraft_version
 
     runs {
         configureEach {
             workingDir = layout.projectDirectory.dir('run')
-            mods {
-                chopdownupdated {
-                    source sourceSets.main
-                }
-            }
         }
 
         register('client')

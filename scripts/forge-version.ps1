@@ -30,19 +30,19 @@ if (-not $forgeVersions.ContainsKey($MinecraftVersion)) {
 $forgeVersion = $forgeVersions[$MinecraftVersion]
 $forgeMajor = [int]($forgeVersion.Split('.')[0])
 $gradle = Join-Path $PSScriptRoot '..\gradlew.bat'
-$buildDirectory = "build/versions/$MinecraftVersion"
 $versionArgs = @(
     "-Pminecraft_version=$MinecraftVersion"
     "-Pforge_version=$forgeVersion"
     "-Pminecraft_version_range=[$MinecraftVersion,1.21.11)"
     "-Pforge_version_range=[$forgeMajor,$($forgeMajor + 1))"
     "-Ploader_version_range=[$forgeMajor,$($forgeMajor + 1))"
-    "-Pbuild_directory=$buildDirectory"
     '--console=plain'
 )
 
 if ($Action -eq 'Build') {
-    & $gradle @versionArgs clean compileJava
+    $buildDirectory = "build/versions/$MinecraftVersion"
+    $buildArgs = @($versionArgs) + "-Pbuild_directory=$buildDirectory" + @('clean', 'compileJava')
+    & $gradle @buildArgs
 } else {
     $runTask = if ($Side -eq 'Client') { 'runClient' } else { 'runServer' }
     $runArgs = @($versionArgs) + $runTask
