@@ -457,7 +457,7 @@ public class Tree implements Runnable {
 
     private void clearLeafLandingPath(TreeMovePair pair) {
         BlockPos below = pair.to.below();
-        while (below.getY() > world.getMinY()) {
+        while (below.getY() > world.getMinBuildHeight()) {
             boolean cleared = false;
             if (Tree.isLeaves(below, world)) {
                 dropDrops(below, below, world.getBlockState(below), world);
@@ -542,7 +542,7 @@ public class Tree implements Runnable {
     }
 
     private boolean canMoveTo(BlockPos pos, boolean log) {
-        return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > world.getMinY();
+        return (isAir(pos) || isPassable(pos) || (log && Tree.isLeaves(pos, world))) && pos.getY() > world.getMinBuildHeight();
     }
 
     private int horizontalDistanceSquared(BlockPos pos1, BlockPos pos2) {
