@@ -6,6 +6,10 @@ plugins {
 version = "${minecraft_version}-${mod_version}"
 group = group_name
 
+if (findProperty('build_directory')) {
+    layout.buildDirectory = file(findProperty('build_directory'))
+}
+
 base {
     archivesName = "${mod_id}-fabric"
 }

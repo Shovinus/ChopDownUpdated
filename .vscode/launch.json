@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Fabric: Debug Client",
+      "name": "Fabric: Debug Client (select version)",
       "type": "java",
       "request": "attach",
       "hostName": "localhost",
@@ -11,13 +11,22 @@
       "timeout": 120000
     },
     {
-      "name": "Fabric: Debug Server",
+      "name": "Fabric: Debug Server (select version)",
       "type": "java",
       "request": "attach",
       "hostName": "localhost",
       "port": 5005,
       "preLaunchTask": "Fabric: Debug Server JVM",
       "timeout": 120000
+    }
+  ],
+  "inputs": [
+    {
+      "id": "minecraftVersion",
+      "type": "pickString",
+      "description": "Minecraft version to test",
+      "default": "1.21.11",
+      "options": ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
     }
   ]
 }

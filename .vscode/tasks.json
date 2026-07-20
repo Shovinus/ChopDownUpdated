@@ -4,8 +4,8 @@
     {
       "label": "Fabric: Run Client",
       "type": "shell",
-      "command": ".\\gradlew.bat",
-      "args": ["runClient"],
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\fabric-version.ps1", "-MinecraftVersion", "${input:minecraftVersion}", "-Side", "Client", "-Action", "Run"],
       "group": "build",
       "options": {
         "cwd": "${workspaceFolder}",
@@ -18,8 +18,8 @@
     {
       "label": "Fabric: Run Server",
       "type": "shell",
-      "command": ".\\gradlew.bat",
-      "args": ["runServer"],
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\fabric-version.ps1", "-MinecraftVersion", "${input:minecraftVersion}", "-Side", "Server", "-Action", "Run"],
       "group": "build",
       "options": {
         "cwd": "${workspaceFolder}",
@@ -49,8 +49,8 @@
     {
       "label": "Fabric: Debug Client JVM",
       "type": "shell",
-      "command": ".\\gradlew.bat",
-      "args": ["runClient", "--debug-jvm", "--console=plain"],
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\fabric-version.ps1", "-MinecraftVersion", "${input:minecraftVersion}", "-Side", "Client", "-Action", "Debug"],
       "isBackground": true,
       "options": {
         "cwd": "${workspaceFolder}",
@@ -73,8 +73,8 @@
     {
       "label": "Fabric: Debug Server JVM",
       "type": "shell",
-      "command": ".\\gradlew.bat",
-      "args": ["runServer", "--debug-jvm", "--console=plain"],
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\scripts\\fabric-version.ps1", "-MinecraftVersion", "${input:minecraftVersion}", "-Side", "Server", "-Action", "Debug"],
       "isBackground": true,
       "options": {
         "cwd": "${workspaceFolder}",
@@ -93,6 +93,15 @@
           "endsPattern": "Listening for transport dt_socket at address: 5005"
         }
       }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "minecraftVersion",
+      "type": "pickString",
+      "description": "Minecraft version to test",
+      "default": "1.21.11",
+      "options": ["1.21", "1.21.1", "1.21.2", "1.21.3", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8", "1.21.9", "1.21.10", "1.21.11"]
     }
   ]
 }
